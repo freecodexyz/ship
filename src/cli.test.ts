@@ -3,6 +3,10 @@ import {mkdir, mkdtemp, readFile, rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 
+import type {CycleProposal} from './createCycleProposal.js';
+import {runCli} from './cli.js';
+import type {WriteCycleProposalInput} from './writeCycleProposal.js';
+
 const directories: string[] = [];
 const repositoryRoot = process.cwd();
 
@@ -82,6 +86,148 @@ describe('CLI', () => {
     expect(result.stderr).toContain('ship: generation failed:');
   });
 
+  test('runs proposal generation as a subcommand of the same CLI', async () => {
+    const writes: WriteCycleProposalInput[] = [];
+    const stdout = captureOutput();
+    const stderr = captureOutput();
+    const proposal = {
+      project: 'microcodex',
+      cycle: '2026-08',
+      allocations: [],
+    } as unknown as CycleProposal;
+
+    const exitCode = await runCli(
+      [
+        'proposal',
+        '--project',
+        'microcodex',
+        '--cycle',
+        '2026-08',
+        '--generated-at',
+        '2026-09-01T00:00:00.000Z',
+        '--base-rpc-url',
+        'https://mainnet.base.org',
+      ],
+      {GITHUB_TOKEN: 'github-token'},
+      stdout,
+      stderr,
+      {
+        createWalletResolver: (token, rpcUrl) => {
+          expect(token).toBe('github-token');
+          expect(rpcUrl).toBe('https://mainnet.base.org');
+          return async () => {
+            throw new Error('unused');
+          };
+        },
+        generate: async () => {
+          throw new Error('generate command must not run');
+        },
+        writeProposal: async input => {
+          writes.push(input);
+          return proposal;
+        },
+      },
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stderr.text()).toBe('');
+    expect(stdout.text()).toContain('cycles/microcodex/2026-08/proposal.json');
+    expect(writes).toHaveLength(1);
+    expect(writes[0]).toMatchObject({
+      project: 'microcodex',
+      cycle: '2026-08',
+      generatedAt: '2026-09-01T00:00:00.000Z',
+      snapshotPath: 'dist/snapshot.json',
+    });
+  });
+
+  test('proposal subcommand reports writer failures', async () => {
+    const stdout = captureOutput();
+    const stderr = captureOutput();
+    const exitCode = await runCli(
+      [
+        'proposal',
+        '--project',
+        'microcodex',
+        '--cycle',
+        '2026-08',
+        '--generated-at',
+        '2026-09-01T00:00:00.000Z',
+        '--base-rpc-url',
+        'https://mainnet.base.org',
+        '--snapshot',
+        'frozen.json',
+      ],
+      {GITHUB_TOKEN: 'token'},
+      stdout,
+      stderr,
+      {
+        createWalletResolver: () => async () => {
+          throw new Error('unused');
+        },
+        generate: async () => {
+          throw new Error('unused');
+        },
+        writeProposal: async () => {
+          throw new Error('cycle already exists');
+        },
+      },
+    );
+
+    expect(exitCode).toBe(1);
+    expect(stdout.text()).toBe('');
+    expect(stderr.text()).toContain(
+      'ship: proposal failed: cycle already exists',
+    );
+  });
+
+  test('proposal subcommand requires authentication and narrow arguments', async () => {
+    const stdout = captureOutput();
+    const stderr = captureOutput();
+    const dependencies = {
+      createWalletResolver: () => async () => {
+        throw new Error('unused');
+      },
+      generate: async () => {
+        throw new Error('unused');
+      },
+      writeProposal: async () => {
+        throw new Error('unused');
+      },
+    };
+    const missingToken = await runCli(
+      [
+        'proposal',
+        '--project',
+        'microcodex',
+        '--cycle',
+        '2026-08',
+        '--generated-at',
+        '2026-09-01T00:00:00.000Z',
+        '--base-rpc-url',
+        'https://mainnet.base.org',
+      ],
+      {},
+      stdout,
+      stderr,
+      dependencies,
+    );
+    expect(missingToken).toBe(1);
+    expect(stderr.text()).toContain(
+      'GITHUB_TOKEN must be set to a non-whitespace token',
+    );
+
+    const invalidCycle = await runCli(
+      ['proposal', '--project', 'microcodex', '--cycle', 'August'],
+      {GITHUB_TOKEN: 'token'},
+      stdout,
+      stderr,
+      dependencies,
+    );
+    expect(invalidCycle).toBe(1);
+    expect(stderr.text()).toContain('--cycle must use YYYY-MM');
+  });
+
   test.each([
     [['--unknown', 'value'], 'unknown flag: --unknown'],
     [['--output'], 'missing value for --output'],
@@ -103,6 +249,18 @@ describe('CLI', () => {
     expect(result.stderr).toContain('Usage: bun src/cli.ts');
   });
 });
+
+function captureOutput(): {write(value: string): void; text(): string} {
+  let contents = '';
+  return {
+    write(value: string): void {
+      contents += value;
+    },
+    text(): string {
+      return contents;
+    },
+  };
+}
 
 async function invoke(
   args: readonly string[],

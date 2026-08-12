@@ -1,5 +1,6 @@
 export * from './constants.js';
 export * from './createBaseContractReader.js';
+export * from './createCycleProposal.js';
 export * from './createGitHubUserIdResolver.js';
 export * from './crypto.js';
 export * from './facts.js';
@@ -11,5 +12,7 @@ export * from './resolveActorWallet.js';
 export * from './rewards.js';
 export * from './score.js';
 export * from './snapshot.js';
+export * from './writeCycleProposal.js';
 export * from './time.js';
 export * from './types.js';
+export * from './verifyCycleProposal.js';
