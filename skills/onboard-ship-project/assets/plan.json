@@ -25,7 +25,9 @@
     "claims": {
       "assignees": true,
       "implementationLabels": ["claimed", "in progress"],
+      "implementationLabelPrefixes": ["claimed:", "in-progress:"],
       "reviewLabels": ["review claimed"],
+      "reviewLabelPrefixes": ["review-claimed:", "review-in-progress:"],
       "comments": {
         "enabled": false,
         "implementationPrefix": "CLAIMING:",

@@ -27,9 +27,9 @@ python3 <skill>/scripts/onboard.py handoff <plan.json>
 python3 <skill>/scripts/onboard.py scaffold <plan.json> --ship-root <fork-pr-checkout>
 ```
 
-The helper requires a non-default branch with a canonical Ship remote. It preserves the prefilled manifest only if bytes match the plan and refuses every skill collision. Review generated files; tighten prose instead of expanding it. Do not add receipt fields or scripts.
-8. From the generated skill, run `node scripts/live-report.mjs --json`. A complete empty report is valid; failed or partial collection is not. Explain surprising exclusions and adjust only confirmed policy.
-9. Run Ship's project tests, compile, lint, and skill validation. Forward-test one realistic candidate when no external mutation is needed; otherwise propose the test and ask first.
+The helper requires a non-default branch with a canonical Ship remote. It preserves the prefilled manifest only if bytes match the plan and refuses every skill collision. Review generated files; tighten prose instead of expanding it. The generated receipt runner must remain compatible with Ship's existing receipt contract.
+8. From the generated skill, run `node scripts/live-report.mjs --json`. A complete empty report is valid; failed or partial collection is not. If models are allowed, forward-test `run-receipt.mjs` against a disposable local repository and validate its marker with Ship's existing receipt parser; never publish the fixture marker.
+9. Explain surprising exclusions and adjust only confirmed policy. Run Ship's project tests, compile, lint, and skill validation. Forward-test one realistic candidate when no external mutation is needed; otherwise propose the test and ask first.
 
 ## Decision rules
 
@@ -41,7 +41,7 @@ The helper requires a non-default branch with a canonical Ship remote. It preser
 - Ship safety rules are a floor. Project policy may add restrictions, not remove security, hostile-input, human-authority, or live-state checks.
 - Put complete resolved behavior in `policy.json`; use `SKILL.md` as a short workflow router and references for mode-specific detail.
 - Commands copied from repository files still require inspection. Never run deployment, signing, secrets, credential, or external mutation commands without explicit authority.
-- Keep the existing receipt paradigm untouched. Contribution policy affects discovery and guidance only; it does not create score, guarantee rewards, or validate receipts.
+- Keep the existing receipt paradigm untouched. The runner only produces Ship's existing signed marker; `src/receipts.ts` remains authoritative. Contribution policy and receipts do not create score or guarantee rewards.
 
 ## Output contract
 
@@ -55,6 +55,7 @@ skills/contribute-to-<id>/
   project.json
   policy.json
   scripts/live-report.mjs
+  scripts/run-receipt.mjs
   references/contribution-guide.md
 ```
 
