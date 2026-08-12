@@ -19,51 +19,28 @@ afterEach(async () => {
 });
 
 describe('CLI', () => {
-  test('runs as bun src/cli.ts and prints a short generation summary', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'ship-cli-'));
-    directories.push(directory);
-    const projectsDirectory = join(directory, 'projects');
-    const outputPath = join(directory, 'snapshot.json');
-    await mkdir(projectsDirectory);
+  test.each([
+    ['default', []],
+    ['explicit', ['help']],
+  ])(
+    'prints help without authentication for %s invocation',
+    async (_, args) => {
+      const result = await invoke(args, undefined);
 
-    const result = await invoke(
-      [
-        '--projects-dir',
-        projectsDirectory,
-        '--output',
-        outputPath,
-        '--now',
-        '2026-08-12T12:00:00.000Z',
-        '--collection-window-days',
-        '2',
-      ],
-      'test-token',
-    );
-
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).toContain('ship: Loading project configuration...\n');
-    expect(result.stderr).toContain(
-      'ship: Collecting 0 projects from 2026-08-10T12:00:00.000Z to 2026-08-12T12:00:00.000Z.\n',
-    );
-    expect(result.stderr).toContain(
-      `ship: Validated 0 buckets and 0 awards; writing ${outputPath}...\n`,
-    );
-    expect(result.stderr).toContain(`ship: Wrote ${outputPath}.\n`);
-    expect(result.stdout).toBe(
-      `Generated 0 projects, 0 buckets, 0 awards, and 0 receipts in ${outputPath}.\n`,
-    );
-    expect(JSON.parse(await readFile(outputPath, 'utf8'))).toMatchObject({
-      generatedAt: '2026-08-12T12:00:00.000Z',
-      window: {
-        from: '2026-08-10T12:00:00.000Z',
-        to: '2026-08-12T12:00:00.000Z',
-      },
-      projects: [],
-      buckets: [],
-      awards: [],
-      receipts: [],
-    });
-  });
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toBe('');
+      expect(result.stdout).toContain(
+        'Usage: bun src/cli.ts <command> [options]',
+      );
+      expect(result.stdout).toContain('help      Show this help (default)');
+      expect(result.stdout).toContain(
+        'generate  Generate a contribution snapshot',
+      );
+      expect(result.stdout).toContain(
+        'verify    Verify a stored reward cycle proposal',
+      );
+    },
+  );
 
   test('runs generation through its explicit subcommand', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'ship-cli-'));
@@ -100,8 +77,8 @@ describe('CLI', () => {
     });
   });
 
-  test('exits non-zero when GITHUB_TOKEN is absent', async () => {
-    const result = await invoke([], undefined);
+  test('explicit generation exits non-zero when GITHUB_TOKEN is absent', async () => {
+    const result = await invoke(['generate'], undefined);
 
     expect(result.exitCode).not.toBe(0);
     expect(result.stdout).toBe('');
@@ -112,7 +89,7 @@ describe('CLI', () => {
     const directory = await mkdtemp(join(tmpdir(), 'ship-cli-'));
     directories.push(directory);
     const result = await invoke(
-      ['--projects-dir', join(directory, 'missing-projects')],
+      ['generate', '--projects-dir', join(directory, 'missing-projects')],
       'test-token',
     );
 
@@ -436,6 +413,19 @@ describe('CLI', () => {
     expect(stderr.text()).toContain('GITHUB_TOKEN must be set');
   });
 
+  test('rejects unknown commands and help arguments without doing work', async () => {
+    const unknown = await invoke(['unknown'], undefined);
+    expect(unknown.exitCode).toBe(1);
+    expect(unknown.stdout).toBe('');
+    expect(unknown.stderr).toContain('ship: unknown command: unknown');
+    expect(unknown.stderr).toContain('help      Show this help (default)');
+
+    const helpArgument = await invoke(['help', 'generate'], undefined);
+    expect(helpArgument.exitCode).toBe(1);
+    expect(helpArgument.stdout).toBe('');
+    expect(helpArgument.stderr).toContain('help does not accept arguments');
+  });
+
   test.each([
     [['--unknown', 'value'], 'unknown flag: --unknown'],
     [['--output'], 'missing value for --output'],
@@ -449,7 +439,7 @@ describe('CLI', () => {
     ],
     [['--output', 'one', '--output', 'two'], 'duplicate flag: --output'],
   ])('rejects invalid narrow flags %#', async (args, expectedMessage) => {
-    const result = await invoke(args, 'test-token');
+    const result = await invoke(['generate', ...args], 'test-token');
 
     expect(result.exitCode).not.toBe(0);
     expect(result.stdout).toBe('');

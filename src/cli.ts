@@ -13,7 +13,7 @@ import {writeCycleProposalReview} from './writeCycleProposalReview.js';
 import {verifyStoredCycleProposal} from './verifyStoredCycleProposal.js';
 
 const GENERATE_USAGE =
-  'Usage: bun src/cli.ts [generate] [--projects-dir PATH] [--output PATH] ' +
+  'Usage: bun src/cli.ts generate [--projects-dir PATH] [--output PATH] ' +
   '[--now TIMESTAMP] [--collection-window-days DAYS]';
 const PROPOSAL_USAGE =
   'Usage: bun src/cli.ts proposal --project ID --cycle YYYY-MM ' +
@@ -24,6 +24,19 @@ const REVIEW_USAGE =
   '[--reason TEXT] [--base-rpc-url URL]';
 const VERIFY_USAGE =
   'Usage: bun src/cli.ts verify --project ID --cycle YYYY-MM';
+const HELP = `Usage: bun src/cli.ts <command> [options]
+
+Commands:
+  help      Show this help (default)
+  generate  Generate a contribution snapshot
+  proposal  Create a reward cycle proposal
+  review    Edit review-owned proposal fields
+  verify    Verify a stored reward cycle proposal
+
+${GENERATE_USAGE}
+${PROPOSAL_USAGE}
+${REVIEW_USAGE}
+${VERIFY_USAGE}`;
 
 type GenerateOptions = {
   readonly projectsDirectory?: string;
@@ -103,6 +116,14 @@ export async function runCli(
   errorOutput: Output,
   dependencies: CliDependencies = DEFAULT_DEPENDENCIES,
 ): Promise<number> {
+  if (argv.length === 0 || argv[0] === 'help') {
+    if (argv.length > 1) {
+      errorOutput.write(`ship: help does not accept arguments\n${HELP}\n`);
+      return 1;
+    }
+    output.write(`${HELP}\n`);
+    return 0;
+  }
   if (argv[0] === 'verify') {
     return runVerifyCommand(argv.slice(1), output, errorOutput, dependencies);
   }
@@ -124,13 +145,17 @@ export async function runCli(
       dependencies,
     );
   }
-  return runGenerateCommand(
-    argv[0] === 'generate' ? argv.slice(1) : argv,
-    environment,
-    output,
-    errorOutput,
-    dependencies,
-  );
+  if (argv[0] === 'generate') {
+    return runGenerateCommand(
+      argv.slice(1),
+      environment,
+      output,
+      errorOutput,
+      dependencies,
+    );
+  }
+  errorOutput.write(`ship: unknown command: ${argv[0]}\n${HELP}\n`);
+  return 1;
 }
 
 async function runGenerateCommand(
