@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "id": "example-project",
+    "name": "Example Project",
+    "mission": "Deliver reviewable improvements to Example Project's public repositories.",
+    "repositories": [
+      {
+        "id": "owner/repository",
+        "branch": "main"
+      }
+    ],
+    "allowedModels": [],
+    "reward": null
+  },
+  "policy": {
+    "modes": ["implementation", "review"],
+    "issues": {
+      "allowUnlabeled": false,
+      "readyLabels": ["help wanted", "good first issue"],
+      "blockedLabels": ["blocked", "human-only"],
+      "sensitiveLabels": ["security", "vulnerability"],
+      "epicLabels": ["epic"]
+    },
+    "claims": {
+      "assignees": true,
+      "implementationLabels": ["claimed", "in progress"],
+      "reviewLabels": ["review claimed"],
+      "comments": {
+        "enabled": false,
+        "implementationPrefix": "CLAIMING:",
+        "reviewPrefix": "CLAIMING REVIEW:",
+        "trustedAssociations": ["OWNER", "MEMBER", "COLLABORATOR"],
+        "expiresAfterDays": 7
+      }
+    },
+    "priorityLabels": ["p0", "p1", "help wanted", "good first issue"],
+    "verification": {
+      "setup": [],
+      "required": []
+    },
+    "evidence": {
+      "implementation": ["State the outcome, checks run, and relevant manual verification."],
+      "review": ["Report concrete findings, checks performed, and remaining human decisions."]
+    },
+    "guide": [
+      "Read live repository instructions before selecting or changing work."
+    ]
+  }
+}

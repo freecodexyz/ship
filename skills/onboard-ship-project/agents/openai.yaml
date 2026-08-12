@@ -1,0 +1,4 @@
+interface:
+  display_name: "Onboard a Ship Project"
+  short_description: "Build a tailored contributor skill and work policy"
+  default_prompt: "Use $onboard-ship-project to inspect my repositories and create a tailored Ship contributor skill."
