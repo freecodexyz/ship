@@ -13,7 +13,7 @@ import {writeCycleProposalReview} from './writeCycleProposalReview.js';
 import {verifyStoredCycleProposal} from './verifyStoredCycleProposal.js';
 
 const GENERATE_USAGE =
-  'Usage: bun src/cli.ts [--projects-dir PATH] [--output PATH] ' +
+  'Usage: bun src/cli.ts [generate] [--projects-dir PATH] [--output PATH] ' +
   '[--now TIMESTAMP] [--collection-window-days DAYS]';
 const PROPOSAL_USAGE =
   'Usage: bun src/cli.ts proposal --project ID --cycle YYYY-MM ' +
@@ -124,6 +124,22 @@ export async function runCli(
       dependencies,
     );
   }
+  return runGenerateCommand(
+    argv[0] === 'generate' ? argv.slice(1) : argv,
+    environment,
+    output,
+    errorOutput,
+    dependencies,
+  );
+}
+
+async function runGenerateCommand(
+  argv: readonly string[],
+  environment: Environment,
+  output: Output,
+  errorOutput: Output,
+  dependencies: CliDependencies,
+): Promise<number> {
   const parsed = parseGenerateArguments(argv);
   if (!parsed.ok) {
     errorOutput.write(`ship: ${parsed.message}\n${GENERATE_USAGE}\n`);

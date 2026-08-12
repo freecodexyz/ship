@@ -65,6 +65,41 @@ describe('CLI', () => {
     });
   });
 
+  test('runs generation through its explicit subcommand', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'ship-cli-'));
+    directories.push(directory);
+    const projectsDirectory = join(directory, 'projects');
+    const outputPath = join(directory, 'snapshot.json');
+    await mkdir(projectsDirectory);
+
+    const result = await invoke(
+      [
+        'generate',
+        '--projects-dir',
+        projectsDirectory,
+        '--output',
+        outputPath,
+        '--now',
+        '2026-08-12T12:00:00.000Z',
+        '--collection-window-days',
+        '2',
+      ],
+      'test-token',
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe(
+      `Generated 0 projects, 0 buckets, 0 awards, and 0 receipts in ${outputPath}.\n`,
+    );
+    expect(JSON.parse(await readFile(outputPath, 'utf8'))).toMatchObject({
+      generatedAt: '2026-08-12T12:00:00.000Z',
+      window: {
+        from: '2026-08-10T12:00:00.000Z',
+        to: '2026-08-12T12:00:00.000Z',
+      },
+    });
+  });
+
   test('exits non-zero when GITHUB_TOKEN is absent', async () => {
     const result = await invoke([], undefined);
 
