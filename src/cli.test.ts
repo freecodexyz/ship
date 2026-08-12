@@ -228,6 +228,86 @@ describe('CLI', () => {
     expect(stderr.text()).toContain('--cycle must use YYYY-MM');
   });
 
+  test('runs read-only proposal verification without authentication', async () => {
+    const stdout = captureOutput();
+    const stderr = captureOutput();
+    let verified: unknown;
+    const exitCode = await runCli(
+      ['verify', '--project', 'microcodex', '--cycle', '2026-08'],
+      {},
+      stdout,
+      stderr,
+      {
+        createWalletResolver: () => async () => {
+          throw new Error('wallet lookup must not run');
+        },
+        generate: async () => {
+          throw new Error('generation must not run');
+        },
+        writeProposal: async () => {
+          throw new Error('proposal writer must not run');
+        },
+        verifyProposal: async input => {
+          verified = input;
+          return {
+            project: 'microcodex',
+            cycle: '2026-08',
+            allocations: [{}],
+            sourceSnapshot: {sha256: 'a'.repeat(64)},
+          } as unknown as CycleProposal;
+        },
+      },
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stderr.text()).toBe('');
+    expect(verified).toEqual({project: 'microcodex', cycle: '2026-08'});
+    expect(stdout.text()).toBe(
+      `Verified 1 allocations for microcodex/2026-08; source SHA-256 ${'a'.repeat(64)}.\n`,
+    );
+  });
+
+  test('verify command rejects invalid arguments and reports failures', async () => {
+    const stdout = captureOutput();
+    const stderr = captureOutput();
+    const dependencies = {
+      createWalletResolver: () => async () => {
+        throw new Error('unused');
+      },
+      generate: async () => {
+        throw new Error('unused');
+      },
+      writeProposal: async () => {
+        throw new Error('unused');
+      },
+      verifyProposal: async () => {
+        throw new Error('snapshot digest mismatch');
+      },
+    };
+    const invalid = await runCli(
+      ['verify', '--project', 'microcodex', '--cycle', 'August'],
+      {},
+      stdout,
+      stderr,
+      dependencies,
+    );
+    expect(invalid).toBe(1);
+    expect(stderr.text()).toContain('--cycle must use YYYY-MM');
+    expect(stderr.text()).toContain('Usage: bun src/cli.ts verify');
+
+    const failed = await runCli(
+      ['verify', '--project', 'microcodex', '--cycle', '2026-08'],
+      {},
+      stdout,
+      stderr,
+      dependencies,
+    );
+    expect(failed).toBe(1);
+    expect(stderr.text()).toContain(
+      'ship: verification failed: snapshot digest mismatch',
+    );
+  });
+
   test('runs review edits as another command of the same CLI', async () => {
     const stdout = captureOutput();
     const stderr = captureOutput();

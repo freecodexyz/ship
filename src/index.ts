@@ -18,3 +18,4 @@ export * from './writeCycleProposal.js';
 export * from './writeCycleProposalReview.js';
 export * from './types.js';
 export * from './verifyCycleProposal.js';
+export * from './verifyStoredCycleProposal.js';

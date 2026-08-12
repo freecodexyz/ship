@@ -6,7 +6,7 @@
         "login": "paoloanzn"
       },
       "adjustmentReason": null,
-      "approvedBaseUnits": "0",
+      "approvedBaseUnits": "1000000000",
       "awardIds": [
         "merged_pr:PR_kwDOTooy2877jNw1",
         "test_change:PR_kwDOTooy2877jNw1",
@@ -26,7 +26,7 @@
         "creditedTokens": 0,
         "linkedRunIds": []
       },
-      "state": "proposed",
+      "state": "approved",
       "wallet": {
         "address": "0xe8134c7574469f4ddd807e456c4ef8de741f8eee",
         "chainId": 8453,
@@ -45,8 +45,8 @@
   "project": "microcodex",
   "review": {
     "days": 14,
-    "endsAt": "2026-09-15T00:00:00.000Z",
-    "lastMaterialChangeAt": "2026-09-01T00:00:00.000Z"
+    "endsAt": "2026-09-16T00:00:00.000Z",
+    "lastMaterialChangeAt": "2026-09-02T00:00:00.000Z"
   },
   "reward": {
     "monthlyPoolBaseUnits": "1000000000",
@@ -64,9 +64,9 @@
   },
   "status": "proposed",
   "totals": {
-    "approvedBaseUnits": "0",
+    "approvedBaseUnits": "1000000000",
     "projectedBaseUnits": "1000000000",
-    "proposedBaseUnits": "1000000000",
+    "proposedBaseUnits": "0",
     "unclaimedBaseUnits": "0"
   },
   "walletBinding": {

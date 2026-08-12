@@ -10,6 +10,7 @@ import {parseCanonicalTimestamp} from './time.js';
 import type {Actor} from './types.js';
 import {writeCycleProposal} from './writeCycleProposal.js';
 import {writeCycleProposalReview} from './writeCycleProposalReview.js';
+import {verifyStoredCycleProposal} from './verifyStoredCycleProposal.js';
 
 const GENERATE_USAGE =
   'Usage: bun src/cli.ts [--projects-dir PATH] [--output PATH] ' +
@@ -21,6 +22,8 @@ const REVIEW_USAGE =
   'Usage: bun src/cli.ts review --project ID --cycle YYYY-MM --intent ID ' +
   '--changed-at TIMESTAMP --state STATE --approved-base-units UNITS ' +
   '[--reason TEXT] [--base-rpc-url URL]';
+const VERIFY_USAGE =
+  'Usage: bun src/cli.ts verify --project ID --cycle YYYY-MM';
 
 type GenerateOptions = {
   readonly projectsDirectory?: string;
@@ -52,6 +55,11 @@ type ProposalOptions = {
   readonly snapshotPath: string;
 };
 
+type VerifyOptions = {
+  readonly project: string;
+  readonly cycle: string;
+};
+
 type Output = {
   readonly write: (message: string) => void;
 };
@@ -66,6 +74,7 @@ type CliDependencies = {
   readonly generate: typeof generate;
   readonly writeProposal: typeof writeCycleProposal;
   readonly writeReview?: typeof writeCycleProposalReview;
+  readonly verifyProposal?: typeof verifyStoredCycleProposal;
 };
 
 const DEFAULT_DEPENDENCIES: CliDependencies = {
@@ -83,6 +92,7 @@ const DEFAULT_DEPENDENCIES: CliDependencies = {
   generate,
   writeProposal: writeCycleProposal,
   writeReview: writeCycleProposalReview,
+  verifyProposal: verifyStoredCycleProposal,
 };
 
 /** Runs the executable command and returns its process exit code. */
@@ -93,6 +103,9 @@ export async function runCli(
   errorOutput: Output,
   dependencies: CliDependencies = DEFAULT_DEPENDENCIES,
 ): Promise<number> {
+  if (argv[0] === 'verify') {
+    return runVerifyCommand(argv.slice(1), output, errorOutput, dependencies);
+  }
   if (argv[0] === 'review') {
     return runReviewCommand(
       argv.slice(1),
@@ -137,6 +150,33 @@ export async function runCli(
     return 0;
   } catch (error: unknown) {
     errorOutput.write(`ship: generation failed: ${errorMessage(error)}\n`);
+    return 1;
+  }
+}
+
+async function runVerifyCommand(
+  argv: readonly string[],
+  output: Output,
+  errorOutput: Output,
+  dependencies: CliDependencies,
+): Promise<number> {
+  const parsed = parseVerifyArguments(argv);
+  if (!parsed.ok) {
+    errorOutput.write(`ship: ${parsed.message}\n${VERIFY_USAGE}\n`);
+    return 1;
+  }
+  try {
+    const proposal = await (
+      dependencies.verifyProposal ?? verifyStoredCycleProposal
+    )(parsed.value);
+    output.write(
+      `Verified ${proposal.allocations.length} allocations for ` +
+        `${proposal.project}/${proposal.cycle}; source SHA-256 ` +
+        `${proposal.sourceSnapshot.sha256}.\n`,
+    );
+    return 0;
+  } catch (error: unknown) {
+    errorOutput.write(`ship: verification failed: ${errorMessage(error)}\n`);
     return 1;
   }
 }
@@ -230,6 +270,23 @@ async function runProposalCommand(
     errorOutput.write(`ship: proposal failed: ${errorMessage(error)}\n`);
     return 1;
   }
+}
+
+function parseVerifyArguments(argv: readonly string[]): Result<VerifyOptions> {
+  const values = parseFlagValues(
+    argv,
+    new Set(['--project', '--cycle']),
+    'verify',
+  );
+  if (!values.ok) return values;
+  const project = values.value.get('--project');
+  const cycle = values.value.get('--cycle');
+  if (project === undefined)
+    return {ok: false, message: '--project is required'};
+  if (cycle === undefined || !/^\d{4}-(?:0[1-9]|1[0-2])$/.test(cycle)) {
+    return {ok: false, message: '--cycle must use YYYY-MM'};
+  }
+  return {ok: true, value: {project, cycle}};
 }
 
 function parseReviewArguments(argv: readonly string[]): Result<ReviewOptions> {
