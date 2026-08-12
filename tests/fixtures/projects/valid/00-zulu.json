@@ -1,0 +1,26 @@
+{
+  "id": "zulu",
+  "name": "Zulu Project",
+  "repositories": [
+    {
+      "id": "MixedCase/Zulu",
+      "branch": "release/next"
+    }
+  ],
+  "reward": {
+    "startsAt": "2026-08-01T00:00:00.000Z",
+    "token": {
+      "address": "0x1111111111111111111111111111111111111111",
+      "decimals": 18,
+      "symbol": "SHIP"
+    },
+    "monthlyPoolBaseUnits": "1000000"
+  },
+  "allowedModels": [
+    {
+      "client": "codex",
+      "provider": "openai",
+      "model": "gpt-5"
+    }
+  ]
+}

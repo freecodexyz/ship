@@ -1,0 +1,508 @@
+{
+  "awards": [
+    {
+      "actor": {
+        "id": "U_bob",
+        "login": "bob"
+      },
+      "cycle": "2026-07",
+      "id": "award-zeta-issue",
+      "kind": "resolved_issue",
+      "occurredAt": "2026-07-02T10:00:00.000Z",
+      "points": 4,
+      "project": "zeta",
+      "repo": "Acme/Zeta",
+      "source": {
+        "kind": "issue",
+        "number": 200,
+        "title": "Resolve Zeta issue"
+      }
+    },
+    {
+      "actor": {
+        "id": "U_bob",
+        "login": "bob"
+      },
+      "cycle": "2026-07",
+      "evaluationPoints": 25,
+      "id": "award-zeta-evaluation",
+      "kind": "evaluation",
+      "occurredAt": "2026-07-02T11:00:00.000Z",
+      "points": 8,
+      "project": "zeta",
+      "repo": "Acme/Zeta",
+      "runId": "run-zeta",
+      "source": {
+        "kind": "pr",
+        "number": 201,
+        "title": "Evaluate Zeta outcome"
+      }
+    },
+    {
+      "actor": {
+        "id": "U_alice",
+        "login": "alice"
+      },
+      "cycle": "2026-07",
+      "id": "award-alpha-merged",
+      "kind": "merged_pr",
+      "occurredAt": "2026-07-03T10:00:00.000Z",
+      "points": 10,
+      "project": "alpha",
+      "repo": "Acme/Alpha",
+      "runId": "run-alpha",
+      "source": {
+        "kind": "pr",
+        "number": 100,
+        "title": "Ship Alpha feature"
+      }
+    },
+    {
+      "actor": {
+        "id": "U_alice",
+        "login": "alice"
+      },
+      "cycle": "2026-07",
+      "id": "award-alpha-issue",
+      "kind": "resolved_issue",
+      "occurredAt": "2026-07-04T10:00:00.000Z",
+      "points": 4,
+      "project": "alpha",
+      "repo": "Acme/Alpha",
+      "source": {
+        "kind": "issue",
+        "number": 101,
+        "title": "Resolve Alpha issue"
+      }
+    },
+    {
+      "actor": {
+        "id": "U_alice",
+        "login": "alice"
+      },
+      "cycle": "2026-07",
+      "id": "award-alpha-test",
+      "kind": "test_change",
+      "occurredAt": "2026-07-05T10:00:00.000Z",
+      "points": 4,
+      "project": "alpha",
+      "repo": "Acme/Alpha",
+      "source": {
+        "kind": "pr",
+        "number": 102,
+        "title": "Test Alpha behavior"
+      }
+    },
+    {
+      "actor": {
+        "id": "U_alice",
+        "login": "alice"
+      },
+      "cycle": "2026-07",
+      "evidenceKind": "video",
+      "id": "award-alpha-evidence",
+      "kind": "evidence",
+      "occurredAt": "2026-07-06T10:00:00.000Z",
+      "points": 2,
+      "project": "alpha",
+      "repo": "Acme/Alpha",
+      "source": {
+        "kind": "pr",
+        "number": 103,
+        "title": "Demonstrate Alpha change"
+      }
+    },
+    {
+      "actor": {
+        "id": "U_alice",
+        "login": "alice"
+      },
+      "cycle": "2026-07",
+      "id": "award-alpha-review",
+      "kind": "review",
+      "occurredAt": "2026-07-07T10:00:00.000Z",
+      "points": 3,
+      "project": "alpha",
+      "repo": "Acme/Alpha",
+      "source": {
+        "kind": "review",
+        "number": 104,
+        "title": "Review Alpha change"
+      }
+    },
+    {
+      "actor": {
+        "id": "U_alice",
+        "login": "alice"
+      },
+      "cycle": "2026-07",
+      "evaluationPoints": 12,
+      "id": "award-alpha-evaluation",
+      "kind": "evaluation",
+      "occurredAt": "2026-07-08T10:00:00.000Z",
+      "points": 8,
+      "project": "alpha",
+      "repo": "Acme/Alpha",
+      "source": {
+        "kind": "pr",
+        "number": 105,
+        "title": "Evaluate Alpha outcome"
+      }
+    },
+    {
+      "actor": {
+        "id": "U_bob",
+        "login": "bob"
+      },
+      "cycle": "2026-07",
+      "evidenceKind": "screenshot",
+      "id": "award-alpha-bob-evidence",
+      "kind": "evidence",
+      "occurredAt": "2026-07-09T10:00:00.000Z",
+      "points": 1,
+      "project": "alpha",
+      "repo": "Acme/Alpha",
+      "source": {
+        "kind": "pr",
+        "number": 106,
+        "title": "Bob improves caching"
+      }
+    },
+    {
+      "actor": {
+        "id": "U_bob",
+        "login": "bob"
+      },
+      "cycle": "2026-07",
+      "id": "award-alpha-bob-merged",
+      "kind": "merged_pr",
+      "occurredAt": "2026-07-09T10:00:00.000Z",
+      "points": 10,
+      "project": "alpha",
+      "repo": "Acme/Alpha",
+      "source": {
+        "kind": "pr",
+        "number": 106,
+        "title": "Bob improves caching"
+      }
+    },
+    {
+      "actor": {
+        "id": "U_carol",
+        "login": "carol"
+      },
+      "cycle": "2026-07",
+      "evidenceKind": "screenshot",
+      "id": "award-alpha-carol-evidence",
+      "kind": "evidence",
+      "occurredAt": "2026-07-09T10:00:00.000Z",
+      "points": 1,
+      "project": "alpha",
+      "repo": "Acme/Alpha",
+      "source": {
+        "kind": "pr",
+        "number": 107,
+        "title": "Carol improves caching"
+      }
+    },
+    {
+      "actor": {
+        "id": "U_carol",
+        "login": "carol"
+      },
+      "cycle": "2026-07",
+      "id": "award-alpha-carol-merged",
+      "kind": "merged_pr",
+      "occurredAt": "2026-07-09T10:00:00.000Z",
+      "points": 10,
+      "project": "alpha",
+      "repo": "Acme/Alpha",
+      "runId": "run-carol",
+      "source": {
+        "kind": "pr",
+        "number": 107,
+        "title": "Carol improves caching"
+      }
+    },
+    {
+      "actor": {
+        "id": "U_alice",
+        "login": "alice"
+      },
+      "cycle": "2026-08",
+      "id": "award-alpha-august-review",
+      "kind": "review",
+      "occurredAt": "2026-08-02T12:00:00.000Z",
+      "points": 3,
+      "project": "alpha",
+      "repo": "Acme/Alpha",
+      "source": {
+        "kind": "review",
+        "number": 108,
+        "title": "Review August change"
+      }
+    }
+  ],
+  "buckets": [
+    {
+      "actor": {
+        "id": "U_alice",
+        "login": "alice"
+      },
+      "breakdown": {
+        "evaluation": 8,
+        "evidence": 2,
+        "merged_pr": 10,
+        "resolved_issue": 4,
+        "review": 3,
+        "test_change": 4
+      },
+      "counts": {
+        "evaluation": 1,
+        "merged_pr": 1,
+        "resolved_issue": 1,
+        "review": 1,
+        "test_change": 1
+      },
+      "cycle": "2026-07",
+      "project": "alpha",
+      "score": 31
+    },
+    {
+      "actor": {
+        "id": "U_bob",
+        "login": "bob"
+      },
+      "breakdown": {
+        "evaluation": 0,
+        "evidence": 1,
+        "merged_pr": 10,
+        "resolved_issue": 0,
+        "review": 0,
+        "test_change": 0
+      },
+      "counts": {
+        "evaluation": 0,
+        "merged_pr": 1,
+        "resolved_issue": 0,
+        "review": 0,
+        "test_change": 0
+      },
+      "cycle": "2026-07",
+      "project": "alpha",
+      "score": 11
+    },
+    {
+      "actor": {
+        "id": "U_carol",
+        "login": "carol"
+      },
+      "breakdown": {
+        "evaluation": 0,
+        "evidence": 1,
+        "merged_pr": 10,
+        "resolved_issue": 0,
+        "review": 0,
+        "test_change": 0
+      },
+      "counts": {
+        "evaluation": 0,
+        "merged_pr": 1,
+        "resolved_issue": 0,
+        "review": 0,
+        "test_change": 0
+      },
+      "cycle": "2026-07",
+      "project": "alpha",
+      "score": 11
+    },
+    {
+      "actor": {
+        "id": "U_alice",
+        "login": "alice"
+      },
+      "breakdown": {
+        "evaluation": 0,
+        "evidence": 0,
+        "merged_pr": 0,
+        "resolved_issue": 0,
+        "review": 3,
+        "test_change": 0
+      },
+      "counts": {
+        "evaluation": 0,
+        "merged_pr": 0,
+        "resolved_issue": 0,
+        "review": 1,
+        "test_change": 0
+      },
+      "cycle": "2026-08",
+      "project": "alpha",
+      "score": 3
+    },
+    {
+      "actor": {
+        "id": "U_bob",
+        "login": "bob"
+      },
+      "breakdown": {
+        "evaluation": 8,
+        "evidence": 0,
+        "merged_pr": 0,
+        "resolved_issue": 4,
+        "review": 0,
+        "test_change": 0
+      },
+      "counts": {
+        "evaluation": 1,
+        "merged_pr": 0,
+        "resolved_issue": 1,
+        "review": 0,
+        "test_change": 0
+      },
+      "cycle": "2026-07",
+      "project": "zeta",
+      "score": 12
+    }
+  ],
+  "generatedAt": "2026-09-01T00:05:00.000Z",
+  "projects": [
+    {
+      "allowedModels": [
+        {
+          "client": "codex",
+          "model": "gpt-5",
+          "provider": "openai"
+        },
+        {
+          "client": "claude-code",
+          "model": "claude-opus-4.1",
+          "provider": "anthropic"
+        }
+      ],
+      "id": "alpha",
+      "name": "Alpha Project",
+      "repositories": [
+        {
+          "branch": "main",
+          "id": "Acme/Alpha"
+        }
+      ],
+      "reward": {
+        "monthlyPoolBaseUnits": "1000000",
+        "startsAt": "2026-07-01T00:00:00.000Z",
+        "token": {
+          "address": "0x1111111111111111111111111111111111111111",
+          "decimals": 6,
+          "symbol": "USDC"
+        }
+      }
+    },
+    {
+      "allowedModels": [
+        {
+          "client": "claude-code",
+          "model": "claude-opus-4.1",
+          "provider": "anthropic"
+        }
+      ],
+      "id": "zeta",
+      "name": "Zeta Project",
+      "repositories": [
+        {
+          "branch": "trunk",
+          "id": "Acme/Zeta"
+        }
+      ]
+    }
+  ],
+  "receipts": [
+    {
+      "agent": {
+        "client": "codex",
+        "model": "gpt-5",
+        "provider": "openai"
+      },
+      "completedAt": "2026-07-03T09:30:00.000Z",
+      "device": {
+        "keyId": "run-alpha-device-key",
+        "publicKey": "run-alpha-public-key"
+      },
+      "project": "alpha",
+      "repo": "Acme/Alpha",
+      "runId": "run-alpha",
+      "signature": "run-alpha-signature",
+      "skill": {
+        "revision": "run-alpha-revision",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "startedAt": "2026-07-03T08:30:00.000Z",
+      "usage": {
+        "confidence": "exact",
+        "costMicroUsd": "654321",
+        "totalTokens": 123456
+      },
+      "version": 1
+    },
+    {
+      "agent": {
+        "client": "codex",
+        "model": "gpt-5",
+        "provider": "openai"
+      },
+      "completedAt": "2026-07-09T09:30:00.000Z",
+      "device": {
+        "keyId": "run-carol-device-key",
+        "publicKey": "run-carol-public-key"
+      },
+      "project": "alpha",
+      "repo": "Acme/Alpha",
+      "runId": "run-carol",
+      "signature": "run-carol-signature",
+      "skill": {
+        "revision": "run-carol-revision",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "startedAt": "2026-07-09T08:30:00.000Z",
+      "usage": {
+        "confidence": "unavailable",
+        "costMicroUsd": "0",
+        "totalTokens": 0
+      },
+      "version": 1
+    },
+    {
+      "agent": {
+        "client": "claude-code",
+        "model": "claude-opus-4.1",
+        "provider": "anthropic"
+      },
+      "completedAt": "2026-07-02T09:30:00.000Z",
+      "device": {
+        "keyId": "run-zeta-device-key",
+        "publicKey": "run-zeta-public-key"
+      },
+      "project": "zeta",
+      "repo": "Acme/Zeta",
+      "runId": "run-zeta",
+      "signature": "run-zeta-signature",
+      "skill": {
+        "revision": "run-zeta-revision",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "startedAt": "2026-07-02T08:30:00.000Z",
+      "trajectorySha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "usage": {
+        "confidence": "bounded",
+        "costMicroUsd": "250000",
+        "totalTokens": 500000
+      },
+      "version": 1
+    }
+  ],
+  "schemaVersion": 2,
+  "window": {
+    "from": "2026-07-01T00:00:00.000Z",
+    "to": "2026-09-01T00:00:00.000Z"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "ship",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "gts": "^7.0.0",
+    "typescript": "6.0.3",
+    "@types/node": "^22.7.5"
+  },
+  "scripts": {
+    "cli": "GITHUB_TOKEN=\"$(gh auth token 2>/dev/null || true)\" bun run src/cli.ts",
+    "test": "bun run clean && bun test src tests",
+    "lint": "gts lint",
+    "clean": "gts clean",
+    "compile": "tsc",
+    "fix": "gts fix",
+    "prepare": "bun run compile",
+    "posttest": "bun run lint"
+  }
+}

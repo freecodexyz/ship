@@ -1,0 +1,15 @@
+{
+  "id": "duplicate-repositories",
+  "name": "Duplicate Repositories",
+  "repositories": [
+    {
+      "id": "Owner/Repository",
+      "branch": "main"
+    },
+    {
+      "id": "owner/repository",
+      "branch": "develop"
+    }
+  ],
+  "allowedModels": []
+}

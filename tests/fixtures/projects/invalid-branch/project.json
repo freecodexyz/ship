@@ -1,0 +1,11 @@
+{
+  "id": "invalid-branch",
+  "name": "Invalid Branch",
+  "repositories": [
+    {
+      "id": "owner/repository",
+      "branch": "feature..next"
+    }
+  ],
+  "allowedModels": []
+}

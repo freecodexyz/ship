@@ -1,0 +1,11 @@
+{
+  "id": "Not-Lowercase",
+  "name": "Malformed Project Id",
+  "repositories": [
+    {
+      "id": "owner/repository",
+      "branch": "main"
+    }
+  ],
+  "allowedModels": []
+}

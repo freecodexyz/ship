@@ -1,0 +1,11 @@
+{
+  "id": "one",
+  "name": "One",
+  "repositories": [
+    {
+      "id": "Owner/Shared",
+      "branch": "main"
+    }
+  ],
+  "allowedModels": []
+}

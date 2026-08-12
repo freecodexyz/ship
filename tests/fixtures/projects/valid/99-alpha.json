@@ -1,0 +1,11 @@
+{
+  "id": "alpha",
+  "name": "Alpha Project",
+  "repositories": [
+    {
+      "id": "Acme/Alpha",
+      "branch": "main"
+    }
+  ],
+  "allowedModels": []
+}

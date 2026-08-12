@@ -1,0 +1,12 @@
+{
+  "id": "unknown-field",
+  "name": "Unknown Field",
+  "repositories": [
+    {
+      "id": "owner/repository",
+      "branch": "main"
+    }
+  ],
+  "allowedModels": [],
+  "slug": "not-allowed"
+}

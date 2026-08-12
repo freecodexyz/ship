@@ -1,0 +1,22 @@
+{
+  "id": "duplicate-model",
+  "name": "Duplicate Model",
+  "repositories": [
+    {
+      "id": "owner/repository",
+      "branch": "main"
+    }
+  ],
+  "allowedModels": [
+    {
+      "client": "codex",
+      "provider": "openai",
+      "model": "gpt-5"
+    },
+    {
+      "client": "codex",
+      "provider": "openai",
+      "model": "gpt-5"
+    }
+  ]
+}

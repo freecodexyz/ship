@@ -1,0 +1,20 @@
+{
+  "id": "invalid-timestamp",
+  "name": "Invalid Timestamp",
+  "repositories": [
+    {
+      "id": "owner/repository",
+      "branch": "main"
+    }
+  ],
+  "reward": {
+    "startsAt": "2026-08-01",
+    "token": {
+      "address": "0x1111111111111111111111111111111111111111",
+      "decimals": 18,
+      "symbol": "SHIP"
+    },
+    "monthlyPoolBaseUnits": "1"
+  },
+  "allowedModels": []
+}

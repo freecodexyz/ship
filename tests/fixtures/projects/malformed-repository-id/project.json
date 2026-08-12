@@ -1,0 +1,11 @@
+{
+  "id": "malformed-repository",
+  "name": "Malformed Repository Id",
+  "repositories": [
+    {
+      "id": "owner/repository/path",
+      "branch": "main"
+    }
+  ],
+  "allowedModels": []
+}
