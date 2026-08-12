@@ -1,0 +1,76 @@
+{
+  "allocations": [
+    {
+      "actor": {
+        "id": "U_kgDOC_5qtA",
+        "login": "paoloanzn"
+      },
+      "adjustmentReason": null,
+      "approvedBaseUnits": "0",
+      "awardIds": [
+        "merged_pr:PR_kwDOTooy2877jNw1",
+        "test_change:PR_kwDOTooy2877jNw1",
+        "resolved_issue:I_kwDOTooy288AAAABLd6WXw",
+        "merged_pr:PR_kwDOTooy2877jtcm",
+        "test_change:PR_kwDOTooy2877jtcm",
+        "resolved_issue:I_kwDOTooy288AAAABLd7VPg",
+        "merged_pr:PR_kwDOTooy2877kYa0",
+        "resolved_issue:I_kwDOTooy288AAAABLbtjAw"
+      ],
+      "canonicalScore": 50,
+      "intentId": "reward_microcodex_2026_08_0001_u_kgdoc_5qta",
+      "projectedBaseUnits": "1000000000",
+      "receiptComputation": {
+        "adjustedWeight": 500000,
+        "computeBonusBasisPoints": 0,
+        "creditedTokens": 0,
+        "linkedRunIds": []
+      },
+      "state": "proposed",
+      "wallet": {
+        "address": "0xe8134c7574469f4ddd807e456c4ef8de741f8eee",
+        "chainId": 8453,
+        "identityContract": "0x944db2a2b1268c38cc50cb6337894b55128161cc",
+        "observedAt": "2026-09-01T00:00:00.000Z"
+      }
+    }
+  ],
+  "contributionWindow": {
+    "from": "2026-08-01T00:00:00.000Z",
+    "to": "2026-09-01T00:00:00.000Z"
+  },
+  "cycle": "2026-08",
+  "generatedAt": "2026-09-01T00:00:00.000Z",
+  "kind": "reward-proposal",
+  "project": "microcodex",
+  "review": {
+    "days": 14,
+    "endsAt": "2026-09-15T00:00:00.000Z",
+    "lastMaterialChangeAt": "2026-09-01T00:00:00.000Z"
+  },
+  "reward": {
+    "monthlyPoolBaseUnits": "1000000000",
+    "token": {
+      "address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "decimals": 6,
+      "symbol": "USDC"
+    }
+  },
+  "schemaVersion": 1,
+  "sourceSnapshot": {
+    "generatedAt": "2026-09-01T00:00:00.000Z",
+    "schemaVersion": 2,
+    "sha256": "54c2515061a47b52640501ffc1153aedbe9cc4254e92a8c30ce692c5b7a135a3"
+  },
+  "status": "proposed",
+  "totals": {
+    "approvedBaseUnits": "0",
+    "projectedBaseUnits": "1000000000",
+    "proposedBaseUnits": "1000000000",
+    "unclaimedBaseUnits": "0"
+  },
+  "walletBinding": {
+    "chainId": 8453,
+    "contract": "0x944db2a2b1268c38cc50cb6337894b55128161cc"
+  }
+}

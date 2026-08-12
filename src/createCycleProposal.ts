@@ -25,6 +25,9 @@ const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 const LOWERCASE_EVM_ADDRESS_PATTERN = /^0x[a-f0-9]{40}$/;
 const ZERO_EVM_ADDRESS = `0x${'0'.repeat(40)}`;
 
+export type ProposalAllocationState =
+  'approved' | 'excluded' | 'held' | 'proposed' | 'unclaimed';
+
 export type ProposalAllocation = {
   readonly intentId: string;
   readonly actor: Actor;
@@ -36,7 +39,9 @@ export type ProposalAllocation = {
     readonly linkedRunIds: readonly string[];
   };
   readonly projectedBaseUnits: string;
-  readonly state: 'proposed' | 'unclaimed';
+  readonly approvedBaseUnits: string;
+  readonly state: ProposalAllocationState;
+  readonly adjustmentReason: string | null;
   readonly wallet: {
     readonly chainId: typeof BASE_MAINNET_CHAIN_ID;
     readonly address: `0x${string}`;
@@ -79,6 +84,7 @@ export type CycleProposal = {
   readonly allocations: readonly ProposalAllocation[];
   readonly totals: {
     readonly projectedBaseUnits: string;
+    readonly approvedBaseUnits: string;
     readonly proposedBaseUnits: string;
     readonly unclaimedBaseUnits: string;
   };
@@ -205,6 +211,7 @@ export function createCycleProposal(
     allocations,
     totals: {
       projectedBaseUnits: (proposed + unclaimed).toString(),
+      approvedBaseUnits: '0',
       proposedBaseUnits: proposed.toString(),
       unclaimedBaseUnits: unclaimed.toString(),
     },
@@ -307,7 +314,9 @@ function createAllocation(
       linkedRunIds,
     },
     projectedBaseUnits: contributor.projectedBaseUnits,
+    approvedBaseUnits: '0',
     state,
+    adjustmentReason: null,
     wallet,
     awardIds: orderedAwards.map(award => award.id),
   };

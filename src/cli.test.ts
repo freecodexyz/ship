@@ -228,6 +228,99 @@ describe('CLI', () => {
     expect(stderr.text()).toContain('--cycle must use YYYY-MM');
   });
 
+  test('runs review edits as another command of the same CLI', async () => {
+    const stdout = captureOutput();
+    const stderr = captureOutput();
+    let reviewed: unknown;
+    const exitCode = await runCli(
+      [
+        'review',
+        '--project',
+        'microcodex',
+        '--cycle',
+        '2026-08',
+        '--intent',
+        'reward_microcodex_2026_08_0001_u_actor',
+        '--changed-at',
+        '2026-09-02T00:00:00.000Z',
+        '--state',
+        'approved',
+        '--approved-base-units',
+        '1000',
+      ],
+      {},
+      stdout,
+      stderr,
+      {
+        createWalletResolver: () => async () => {
+          throw new Error('wallet lookup must not run');
+        },
+        generate: async () => {
+          throw new Error('unused');
+        },
+        writeProposal: async () => {
+          throw new Error('unused');
+        },
+        writeReview: async input => {
+          reviewed = input;
+          return {
+            review: {endsAt: '2026-09-16T00:00:00.000Z'},
+          } as unknown as CycleProposal;
+        },
+      },
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stderr.text()).toBe('');
+    expect(stdout.text()).toContain('review now ends 2026-09-16');
+    expect(reviewed).toMatchObject({
+      project: 'microcodex',
+      state: 'approved',
+      approvedBaseUnits: '1000',
+      adjustmentReason: null,
+    });
+  });
+
+  test('review wallet refresh requires authentication', async () => {
+    const stdout = captureOutput();
+    const stderr = captureOutput();
+    const exitCode = await runCli(
+      [
+        'review',
+        '--project',
+        'microcodex',
+        '--cycle',
+        '2026-08',
+        '--intent',
+        'reward_microcodex_2026_08_0001_u_actor',
+        '--changed-at',
+        '2026-09-02T00:00:00.000Z',
+        '--state',
+        'unclaimed',
+        '--approved-base-units',
+        '0',
+        '--base-rpc-url',
+        'https://mainnet.base.org',
+      ],
+      {},
+      stdout,
+      stderr,
+      {
+        createWalletResolver: () => async () => {
+          throw new Error('unused');
+        },
+        generate: async () => {
+          throw new Error('unused');
+        },
+        writeProposal: async () => {
+          throw new Error('unused');
+        },
+      },
+    );
+    expect(exitCode).toBe(1);
+    expect(stderr.text()).toContain('GITHUB_TOKEN must be set');
+  });
+
   test.each([
     [['--unknown', 'value'], 'unknown flag: --unknown'],
     [['--output'], 'missing value for --output'],

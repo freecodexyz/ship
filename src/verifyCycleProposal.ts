@@ -25,7 +25,7 @@ const DAY_MILLISECONDS = 86_400_000;
 export function verifyCycleProposal(
   untrustedProposal: unknown,
   sourceSnapshotBytes: Buffer,
-): void {
+): CycleProposal {
   const proposal = validateProposalBoundary(untrustedProposal);
   const untrustedSnapshot = parseJson(sourceSnapshotBytes);
   const snapshot = validateSnapshot(untrustedSnapshot);
@@ -97,30 +97,127 @@ export function verifyCycleProposal(
     sourceSnapshotSha256: snapshotDigest,
     walletResolutions,
   });
+  const expectedAllocations = expected.allocations.map((allocation, index) => {
+    const actual = proposal.allocations[index];
+    if (actual === undefined) return allocation;
+    return {
+      ...allocation,
+      approvedBaseUnits: actual.approvedBaseUnits,
+      state: actual.state,
+      adjustmentReason: actual.adjustmentReason,
+      wallet:
+        allocation.wallet === null || actual.wallet === null
+          ? null
+          : {...allocation.wallet, observedAt: actual.wallet.observedAt},
+    };
+  });
   const expectedWithReview: CycleProposal = {
     ...expected,
     review: {...proposal.review},
-    allocations: expected.allocations.map((allocation, index) => {
-      const actualWallet = proposal.allocations[index]?.wallet;
-      if (
-        actualWallet === undefined ||
-        actualWallet === null ||
-        allocation.wallet === null
-      ) {
-        return allocation;
-      }
-      return {
-        ...allocation,
-        wallet: {
-          ...allocation.wallet,
-          observedAt: actualWallet.observedAt,
-        },
-      };
-    }),
+    allocations: expectedAllocations,
+    totals: reviewTotals(expectedAllocations),
   };
+  validateReviewAllocations(proposal);
   if (canonicalJson(proposal) !== canonicalJson(expectedWithReview)) {
     throw new TypeError('Proposal differs from its frozen source snapshot.');
   }
+  return proposal;
+}
+
+function validateReviewAllocations(proposal: CycleProposal): void {
+  for (const allocation of proposal.allocations) {
+    if (
+      allocation.state !== 'approved' &&
+      allocation.state !== 'excluded' &&
+      allocation.state !== 'held' &&
+      allocation.state !== 'proposed' &&
+      allocation.state !== 'unclaimed'
+    ) {
+      throw new TypeError('Allocation state is invalid.');
+    }
+    const approved = parseBaseUnits(
+      allocation.approvedBaseUnits,
+      `Allocation ${allocation.intentId} approved amount`,
+    );
+    const projected = parseBaseUnits(
+      allocation.projectedBaseUnits,
+      `Allocation ${allocation.intentId} projected amount`,
+    );
+    if (approved > projected) {
+      throw new TypeError('Approved amount cannot exceed projected amount.');
+    }
+    if (
+      allocation.adjustmentReason !== null &&
+      (allocation.adjustmentReason.trim() !== allocation.adjustmentReason ||
+        allocation.adjustmentReason.length < 12 ||
+        allocation.adjustmentReason.length > 1000)
+    ) {
+      throw new TypeError(
+        'Adjustment reason must be 12 to 1000 trimmed characters.',
+      );
+    }
+    if (
+      allocation.state !== 'proposed' &&
+      allocation.state !== 'unclaimed' &&
+      approved < projected &&
+      allocation.adjustmentReason === null
+    ) {
+      throw new TypeError('Reduced allocation requires an adjustment reason.');
+    }
+    if (allocation.state === 'approved') {
+      if (approved === 0n || allocation.wallet === null) {
+        throw new TypeError('Approved allocation requires money and a wallet.');
+      }
+    } else if (approved !== 0n) {
+      throw new TypeError(
+        'Non-approved allocation must have zero approved amount.',
+      );
+    }
+    if (allocation.state === 'proposed' && allocation.wallet === null) {
+      throw new TypeError('Proposed allocation requires a wallet.');
+    }
+    if (allocation.state === 'unclaimed' && allocation.wallet !== null) {
+      throw new TypeError('Unclaimed allocation cannot retain a wallet.');
+    }
+  }
+}
+
+function reviewTotals(
+  allocations: CycleProposal['allocations'],
+): CycleProposal['totals'] {
+  const projected = allocations.reduce(
+    (sum, allocation) => sum + BigInt(allocation.projectedBaseUnits),
+    0n,
+  );
+  const approved = allocations.reduce(
+    (sum, allocation) => sum + BigInt(allocation.approvedBaseUnits),
+    0n,
+  );
+  const proposed = allocations
+    .filter(allocation => allocation.state === 'proposed')
+    .reduce(
+      (sum, allocation) => sum + BigInt(allocation.projectedBaseUnits),
+      0n,
+    );
+  const unclaimed = allocations
+    .filter(allocation => allocation.state === 'unclaimed')
+    .reduce(
+      (sum, allocation) => sum + BigInt(allocation.projectedBaseUnits),
+      0n,
+    );
+  return {
+    projectedBaseUnits: projected.toString(),
+    approvedBaseUnits: approved.toString(),
+    proposedBaseUnits: proposed.toString(),
+    unclaimedBaseUnits: unclaimed.toString(),
+  };
+}
+
+function parseBaseUnits(value: string, label: string): bigint {
+  if (!/^(?:0|[1-9]\d*)$/.test(value)) {
+    throw new TypeError(`${label} must be canonical base units.`);
+  }
+  return BigInt(value);
 }
 
 function validateProposalBoundary(value: unknown): CycleProposal {
@@ -161,6 +258,23 @@ function validateProposalBoundary(value: unknown): CycleProposal {
       `Proposal allocation ${index} actor`,
     );
     requireString(actor.id, `Proposal allocation ${index} actor ID`);
+    requireString(
+      allocation.projectedBaseUnits,
+      `Proposal allocation ${index} projected amount`,
+    );
+    requireString(
+      allocation.approvedBaseUnits,
+      `Proposal allocation ${index} approved amount`,
+    );
+    requireString(allocation.state, `Proposal allocation ${index} state`);
+    if (
+      allocation.adjustmentReason !== null &&
+      typeof allocation.adjustmentReason !== 'string'
+    ) {
+      throw new TypeError(
+        `Proposal allocation ${index} adjustment reason must be a string or null.`,
+      );
+    }
     if (allocation.wallet !== null) {
       const wallet = requireRecord(
         allocation.wallet,

@@ -126,6 +126,7 @@ describe('createCycleProposal', () => {
     if (aliceAllocation === undefined) return;
     expect(proposal.totals).toEqual({
       projectedBaseUnits: '1000000',
+      approvedBaseUnits: '0',
       proposedBaseUnits: aliceAllocation.projectedBaseUnits,
       unclaimedBaseUnits: (
         BigInt(proposal.allocations[1]?.projectedBaseUnits ?? '0') +
@@ -291,6 +292,7 @@ describe('createCycleProposal', () => {
     expect(proposal.allocations).toEqual([]);
     expect(proposal.totals).toEqual({
       projectedBaseUnits: '0',
+      approvedBaseUnits: '0',
       proposedBaseUnits: '0',
       unclaimedBaseUnits: '0',
     });

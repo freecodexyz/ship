@@ -9,6 +9,7 @@ import {
 import {parseCanonicalTimestamp} from './time.js';
 import type {Actor} from './types.js';
 import {writeCycleProposal} from './writeCycleProposal.js';
+import {writeCycleProposalReview} from './writeCycleProposalReview.js';
 
 const GENERATE_USAGE =
   'Usage: bun src/cli.ts [--projects-dir PATH] [--output PATH] ' +
@@ -16,6 +17,10 @@ const GENERATE_USAGE =
 const PROPOSAL_USAGE =
   'Usage: bun src/cli.ts proposal --project ID --cycle YYYY-MM ' +
   '--generated-at TIMESTAMP --base-rpc-url URL [--snapshot PATH]';
+const REVIEW_USAGE =
+  'Usage: bun src/cli.ts review --project ID --cycle YYYY-MM --intent ID ' +
+  '--changed-at TIMESTAMP --state STATE --approved-base-units UNITS ' +
+  '[--reason TEXT] [--base-rpc-url URL]';
 
 type GenerateOptions = {
   readonly projectsDirectory?: string;
@@ -27,6 +32,17 @@ type GenerateOptions = {
 type Result<T> =
   | {readonly ok: true; readonly value: T}
   | {readonly ok: false; readonly message: string};
+
+type ReviewOptions = {
+  readonly project: string;
+  readonly cycle: string;
+  readonly intentId: string;
+  readonly changedAt: string;
+  readonly state: 'approved' | 'excluded' | 'held' | 'proposed' | 'unclaimed';
+  readonly approvedBaseUnits: string;
+  readonly reason: string | null;
+  readonly baseRpcUrl?: string;
+};
 
 type ProposalOptions = {
   readonly project: string;
@@ -49,6 +65,7 @@ type CliDependencies = {
   ) => (actor: Actor) => Promise<ActorWalletResolution>;
   readonly generate: typeof generate;
   readonly writeProposal: typeof writeCycleProposal;
+  readonly writeReview?: typeof writeCycleProposalReview;
 };
 
 const DEFAULT_DEPENDENCIES: CliDependencies = {
@@ -65,6 +82,7 @@ const DEFAULT_DEPENDENCIES: CliDependencies = {
   },
   generate,
   writeProposal: writeCycleProposal,
+  writeReview: writeCycleProposalReview,
 };
 
 /** Runs the executable command and returns its process exit code. */
@@ -75,6 +93,15 @@ export async function runCli(
   errorOutput: Output,
   dependencies: CliDependencies = DEFAULT_DEPENDENCIES,
 ): Promise<number> {
+  if (argv[0] === 'review') {
+    return runReviewCommand(
+      argv.slice(1),
+      environment,
+      output,
+      errorOutput,
+      dependencies,
+    );
+  }
   if (argv[0] === 'proposal') {
     return runProposalCommand(
       argv.slice(1),
@@ -110,6 +137,56 @@ export async function runCli(
     return 0;
   } catch (error: unknown) {
     errorOutput.write(`ship: generation failed: ${errorMessage(error)}\n`);
+    return 1;
+  }
+}
+
+async function runReviewCommand(
+  argv: readonly string[],
+  environment: Environment,
+  output: Output,
+  errorOutput: Output,
+  dependencies: CliDependencies,
+): Promise<number> {
+  const parsed = parseReviewArguments(argv);
+  if (!parsed.ok) {
+    errorOutput.write(`ship: ${parsed.message}\n${REVIEW_USAGE}\n`);
+    return 1;
+  }
+  let resolveWallet:
+    ReturnType<CliDependencies['createWalletResolver']> | undefined;
+  if (parsed.value.baseRpcUrl !== undefined) {
+    const token = parseGitHubToken(environment.GITHUB_TOKEN);
+    if (!token.ok) {
+      errorOutput.write(`ship: ${token.message}\n`);
+      return 1;
+    }
+    resolveWallet = dependencies.createWalletResolver(
+      token.value,
+      parsed.value.baseRpcUrl,
+    );
+  }
+  try {
+    const proposal = await (
+      dependencies.writeReview ?? writeCycleProposalReview
+    )({
+      project: parsed.value.project,
+      cycle: parsed.value.cycle,
+      intentId: parsed.value.intentId,
+      changedAt: parsed.value.changedAt,
+      state: parsed.value.state,
+      approvedBaseUnits: parsed.value.approvedBaseUnits,
+      adjustmentReason: parsed.value.reason,
+      ...(resolveWallet === undefined ? {} : {resolveWallet}),
+      ...(parsed.value.state === 'unclaimed' ? {wallet: null} : {}),
+    });
+    output.write(
+      `Updated ${parsed.value.intentId}; review now ends ` +
+        `${proposal.review.endsAt}.\n`,
+    );
+    return 0;
+  } catch (error: unknown) {
+    errorOutput.write(`ship: review failed: ${errorMessage(error)}\n`);
     return 1;
   }
 }
@@ -153,6 +230,97 @@ async function runProposalCommand(
     errorOutput.write(`ship: proposal failed: ${errorMessage(error)}\n`);
     return 1;
   }
+}
+
+function parseReviewArguments(argv: readonly string[]): Result<ReviewOptions> {
+  const values = parseFlagValues(
+    argv,
+    new Set([
+      '--project',
+      '--cycle',
+      '--intent',
+      '--changed-at',
+      '--state',
+      '--approved-base-units',
+      '--reason',
+      '--base-rpc-url',
+    ]),
+    'review',
+  );
+  if (!values.ok) return values;
+  const required = (flag: string): Result<string> => {
+    const value = values.value.get(flag);
+    return value === undefined
+      ? {ok: false, message: `${flag} is required`}
+      : {ok: true, value};
+  };
+  const project = required('--project');
+  if (!project.ok) return project;
+  const cycle = required('--cycle');
+  if (!cycle.ok) return cycle;
+  if (!/^\d{4}-(?:0[1-9]|1[0-2])$/.test(cycle.value)) {
+    return {ok: false, message: '--cycle must use YYYY-MM'};
+  }
+  const intentId = required('--intent');
+  if (!intentId.ok) return intentId;
+  const changedAt = required('--changed-at');
+  if (!changedAt.ok) return changedAt;
+  try {
+    parseCanonicalTimestamp(changedAt.value);
+  } catch {
+    return {ok: false, message: '--changed-at must be a canonical timestamp'};
+  }
+  const state = required('--state');
+  if (!state.ok) return state;
+  if (
+    !['approved', 'excluded', 'held', 'proposed', 'unclaimed'].includes(
+      state.value,
+    )
+  ) {
+    return {ok: false, message: '--state is invalid'};
+  }
+  const approved = required('--approved-base-units');
+  if (!approved.ok) return approved;
+  if (!/^(?:0|[1-9]\d*)$/.test(approved.value)) {
+    return {ok: false, message: '--approved-base-units must be canonical'};
+  }
+  return {
+    ok: true,
+    value: {
+      project: project.value,
+      cycle: cycle.value,
+      intentId: intentId.value,
+      changedAt: changedAt.value,
+      state: state.value as ReviewOptions['state'],
+      approvedBaseUnits: approved.value,
+      reason: values.value.get('--reason') ?? null,
+      ...(values.value.get('--base-rpc-url') === undefined
+        ? {}
+        : {baseRpcUrl: values.value.get('--base-rpc-url')}),
+    },
+  };
+}
+
+function parseFlagValues(
+  argv: readonly string[],
+  supportedFlags: ReadonlySet<string>,
+  command: string,
+): Result<Map<string, string>> {
+  const values = new Map<string, string>();
+  for (let index = 0; index < argv.length; index += 2) {
+    const flag = argv[index];
+    if (flag === undefined || !supportedFlags.has(flag)) {
+      return {ok: false, message: `unknown ${command} flag: ${flag ?? ''}`};
+    }
+    if (values.has(flag))
+      return {ok: false, message: `duplicate flag: ${flag}`};
+    const value = argv[index + 1];
+    if (value === undefined || value.length === 0 || value.startsWith('--')) {
+      return {ok: false, message: `missing value for ${flag}`};
+    }
+    values.set(flag, value);
+  }
+  return {ok: true, value: values};
 }
 
 function parseProposalArguments(
