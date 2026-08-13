@@ -66,6 +66,7 @@ jobs:
       - name: Test and compile
         run: |
           bun run test
+          bun run static:test
           bun run compile
 
       - name: Generate live leaderboard snapshot
