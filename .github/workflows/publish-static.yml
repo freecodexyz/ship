@@ -89,18 +89,17 @@ jobs:
             exit 1
           fi
 
-      - name: Deploy exact bundle to Cloudflare Pages
+      - name: Deploy exact bundle as a Cloudflare Worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           set -euo pipefail
           live_main="$(git ls-remote --exit-code --refs https://github.com/freecodexyz/ship.git refs/heads/main | awk 'NR == 1 {print $1}')"
           test "$live_main" = "$GITHUB_SHA"
-          npx wrangler@4.122.0 pages deploy \
-            --project-name=ship-freecodefund \
-            --branch=main \
-            --commit-hash="$GITHUB_SHA" \
-            --commit-dirty=false
+          npx wrangler@4.122.0 deploy \
+            --tag="$GITHUB_SHA" \
+            --message="Ship static resources from $GITHUB_SHA" \
+            --strict
 
       - name: Verify published snapshot metadata
         run: |

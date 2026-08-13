@@ -1,6 +1,6 @@
 # Ship static API
 
-`https://ship.freecodefund.xyz` is Ship's official static publication endpoint. Cloudflare Pages serves artifacts generated periodically from the canonical `freecodexyz/ship` `main` branch.
+`https://ship.freecodefund.xyz` is Ship's official static publication endpoint. A Cloudflare Worker serves static assets generated periodically from the canonical `freecodexyz/ship` `main` branch.
 
 ## Leaderboard snapshot
 
