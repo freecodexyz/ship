@@ -7,5 +7,5 @@ pattern = "ship.freecodefund.xyz"
 custom_domain = true
 
 [assets]
-directory = "./dist"
+directory = "./dist/static"
 not_found_handling = "404-page"

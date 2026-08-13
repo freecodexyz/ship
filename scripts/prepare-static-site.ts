@@ -320,7 +320,7 @@ async function writeStaticFiles(outputRoot: string): Promise<void> {
 
 async function main(): Promise<void> {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  const outputRoot = join(root, 'dist');
+  const outputRoot = join(root, 'dist', 'static');
   const sourceSnapshot = resolve(
     root,
     process.env.SHIP_SNAPSHOT_PATH ?? join('dist', 'snapshot.json'),

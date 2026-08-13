@@ -104,7 +104,7 @@ jobs:
       - name: Verify published snapshot metadata
         run: |
           set -euo pipefail
-          expected="$(node -e 'process.stdout.write(JSON.parse(require("node:fs").readFileSync("dist/api/v1/index.json", "utf8")).snapshot.sha256)')"
+          expected="$(node -e 'process.stdout.write(JSON.parse(require("node:fs").readFileSync("dist/static/api/v1/index.json", "utf8")).snapshot.sha256)')"
           for attempt in 1 2 3; do
             received="$(curl --fail --silent --show-error --header 'Cache-Control: no-cache' "https://ship.freecodefund.xyz/api/v1/snapshot.json?verify=$GITHUB_SHA-$attempt" | sha256sum | awk '{print $1}')" || true
             if [ "$received" = "$expected" ]; then exit 0; fi
