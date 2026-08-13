@@ -3,8 +3,7 @@ node_modules
 
 # output
 out
-dist/*
-!dist/snapshot.json
+dist/
 build
 *.tgz
 
