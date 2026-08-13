@@ -13,6 +13,13 @@ work.
 **Contributing?** Give a [project skill](#for-contributors) to your agent. You do
 not need to read or manually run the files inside a skill.
 
+> [!NOTE]
+> Ship began as a fork of [elizaOS/slopdotcash](https://github.com/elizaOS/slopdotcash).
+> It has since introduced EVM on-chain identity integration through our unique
+> [freecodexyz/identity](https://github.com/freecodexyz/identity) smart contract
+> protocol, and will adopt substantially more EVM on-chain integrations and
+> capabilities as it evolves. Thanks to elizaOS for the original idea.
+
 ## How it works
 
 1. A project owner gives Ship's onboarding skill to Codex, Claude Code, or
