@@ -124,8 +124,14 @@ class OnboardTests(unittest.TestCase):
             skill = root / "skills" / "contribute-to-alpha-project"
             self.assertTrue((skill / "scripts" / "live-report.mjs").is_file())
             self.assertTrue((skill / "scripts" / "run-receipt.mjs").is_file())
+            self.assertTrue((skill / "scripts" / "update-skill.py").is_file())
+            skill_markdown = (skill / "SKILL.md").read_text()
+            first_step = skill_markdown.index("## Mandatory first step")
+            workflow = skill_markdown.index("1. Run `node")
+            self.assertLess(first_step, workflow)
+            self.assertIn("python3 <skill>/scripts/update-skill.py", skill_markdown)
             self.assertEqual(json.loads((skill / "project.json").read_text())["allowedModels"], plan["project"]["allowedModels"])
-            self.assertEqual(len(written), 7)
+            self.assertEqual(len(written), 8)
             with self.assertRaisesRegex(FileExistsError, "existing contributor"):
                 ONBOARD.scaffold(plan, root)
 

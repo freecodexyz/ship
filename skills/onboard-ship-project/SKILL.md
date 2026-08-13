@@ -56,6 +56,7 @@ skills/contribute-to-<id>/
   policy.json
   scripts/live-report.mjs
   scripts/run-receipt.mjs
+  scripts/update-skill.py
   references/contribution-guide.md
 ```
 
