@@ -1,0 +1,6 @@
+name = "ship-freecodefund"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-08-13"
+
+[vars]
+PUBLIC_SITE_URL = "https://ship.freecodefund.xyz"

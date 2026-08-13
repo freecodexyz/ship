@@ -15,6 +15,8 @@
     "lint": "gts lint",
     "clean": "gts clean",
     "compile": "tsc",
+    "static:build": "bun run scripts/prepare-static-site.ts",
+    "static:test": "bun test scripts/prepare-static-site.test.ts",
     "fix": "gts fix",
     "prepare": "bun run compile",
     "posttest": "bun run lint"
