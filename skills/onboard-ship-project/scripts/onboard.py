@@ -156,7 +156,7 @@ def validate(value: Any) -> dict[str, Any]:
     return plan
 
 def project_manifest(project: dict[str, Any]) -> dict[str, Any]:
-    result = {key: project[key] for key in ("id", "name", "repositories")}
+    result = {key: project[key] for key in ("id", "name", "mission", "repositories")}
     if project["reward"] is not None:
         result["reward"] = project["reward"]
     result["allowedModels"] = project["allowedModels"]

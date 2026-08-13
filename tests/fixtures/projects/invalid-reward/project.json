@@ -1,6 +1,7 @@
 {
   "id": "invalid-reward",
   "name": "Invalid Reward",
+  "mission": "Deliver bounded, reviewable improvements to Invalid Reward.",
   "repositories": [
     {
       "id": "owner/repository",

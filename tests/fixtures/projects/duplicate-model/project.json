@@ -1,6 +1,7 @@
 {
   "id": "duplicate-model",
   "name": "Duplicate Model",
+  "mission": "Deliver bounded, reviewable improvements to Duplicate Model.",
   "repositories": [
     {
       "id": "owner/repository",

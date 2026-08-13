@@ -1,6 +1,7 @@
 {
   "id": "alpha",
   "name": "Alpha Project",
+  "mission": "Deliver bounded, reviewable improvements to Alpha Project.",
   "repositories": [
     {
       "id": "Acme/Alpha",

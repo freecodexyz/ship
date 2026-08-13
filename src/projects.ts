@@ -18,6 +18,7 @@ const INVALID_BRANCH_CHARACTER_PATTERN = /[~^:?*[\]\\]/;
 const PROJECT_FIELDS = new Set([
   'id',
   'name',
+  'mission',
   'repositories',
   'reward',
   'allowedModels',
@@ -178,6 +179,7 @@ function parseProject(value: unknown, source: string): Project {
   const record = parseRecord(value, PROJECT_FIELDS, `Project in ${source}`);
   const id = parseProjectId(record.id, `Project id in ${source}`);
   const name = parseNonemptyString(record.name, `Project ${id}.name`);
+  const mission = parseNonemptyString(record.mission, `Project ${id}.mission`);
 
   if (!Array.isArray(record.repositories) || record.repositories.length === 0) {
     throw new TypeError(
@@ -206,6 +208,7 @@ function parseProject(value: unknown, source: string): Project {
   const project: Project = {
     id,
     name,
+    mission,
     repositories,
     allowedModels,
   };

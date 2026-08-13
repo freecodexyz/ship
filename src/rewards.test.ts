@@ -19,6 +19,7 @@ const rewardStartsAt = parseCanonicalTimestamp('2026-08-01T00:00:00.000Z');
 const project: Project = {
   id: 'ship',
   name: 'Ship',
+  mission: 'Deliver bounded, reviewable improvements to Ship.',
   repositories: [{id: repo, branch: 'main'}],
   allowedModels: [],
 };

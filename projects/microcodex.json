@@ -1,6 +1,7 @@
 {
   "id": "microcodex",
   "name": "Microcodex",
+  "mission": "Build reliable, reviewable tools that help developers collaborate with coding agents.",
   "repositories": [
     {
       "id": "paoloanzn/microcodex",

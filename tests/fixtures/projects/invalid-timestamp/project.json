@@ -1,6 +1,7 @@
 {
   "id": "invalid-timestamp",
   "name": "Invalid Timestamp",
+  "mission": "Deliver bounded, reviewable improvements to Invalid Timestamp.",
   "repositories": [
     {
       "id": "owner/repository",

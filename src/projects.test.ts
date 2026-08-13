@@ -13,6 +13,7 @@ function project(
   return {
     id,
     name: `Project ${id}`,
+    mission: `Deliver bounded, reviewable improvements to Project ${id}.`,
     repositories: [{id: repositoryId, branch: 'main'}],
     allowedModels: [{client: 'codex', provider: 'openai', model: 'gpt-5'}],
   };

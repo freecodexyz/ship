@@ -120,7 +120,7 @@ class OnboardTests(unittest.TestCase):
             project_path.write_bytes(ONBOARD.project_bytes(plan["project"]))
             written = ONBOARD.scaffold(plan, root)
             manifest = json.loads(project_path.read_text())
-            self.assertEqual(set(manifest), {"id", "name", "repositories", "allowedModels"})
+            self.assertEqual(set(manifest), {"id", "name", "mission", "repositories", "allowedModels"})
             skill = root / "skills" / "contribute-to-alpha-project"
             self.assertTrue((skill / "scripts" / "live-report.mjs").is_file())
             self.assertTrue((skill / "scripts" / "run-receipt.mjs").is_file())

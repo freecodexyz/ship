@@ -13,6 +13,7 @@ export type Actor = {
 export type Project = {
   readonly id: Lowercase<string>;
   readonly name: string;
+  readonly mission: string;
   readonly repositories: readonly ProjectRepository[];
   readonly reward?: RewardConfig;
   readonly allowedModels: readonly ProjectModel[];
@@ -223,7 +224,7 @@ export type RewardContributor = {
 
 /** The stable static JSON contract emitted by the generator. */
 export type Snapshot = {
-  readonly schemaVersion: 2;
+  readonly schemaVersion: 3;
   readonly generatedAt: CanonicalTimestamp;
   readonly window: CollectionWindow;
   readonly projects: readonly Project[];

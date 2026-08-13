@@ -35,7 +35,7 @@ describe('verifyStoredCycleProposal', () => {
       state: 'approved',
     });
     expect(proposal.sourceSnapshot.sha256).toBe(
-      '54c2515061a47b52640501ffc1153aedbe9cc4254e92a8c30ce692c5b7a135a3',
+      'edbdd2f1094fc40436db7ff2e4306d13cafd5262b6282fdb8448567a3aeba721',
     );
   });
 

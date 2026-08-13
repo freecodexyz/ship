@@ -34,6 +34,7 @@ function project(id: Lowercase<string>): Project {
   return {
     id,
     name: id,
+    mission: `Deliver bounded, reviewable improvements to ${id}.`,
     repositories: [{id: repo, branch: 'main'}],
     allowedModels: [],
   };
@@ -144,7 +145,7 @@ describe('buildSnapshot', () => {
       ],
     );
 
-    expect(snapshot.schemaVersion).toBe(2);
+    expect(snapshot.schemaVersion).toBe(3);
     expect(snapshot.generatedAt).toBe(generatedAt);
     expect(snapshot.window).toEqual(window);
     expect(snapshot.projects.map(value => value.id)).toEqual(['alpha', 'zeta']);
@@ -244,6 +245,19 @@ describe('validateSnapshot', () => {
 
     expect(validateSnapshot(snapshot)).toBe(snapshot);
   });
+
+  test.each([undefined, '', ' mission', 'mission '])(
+    'rejects invalid project mission %j',
+    mission => {
+      const snapshot = validSnapshot();
+      expect(() =>
+        validateSnapshot({
+          ...snapshot,
+          projects: [{...snapshot.projects[0], mission}],
+        }),
+      ).toThrow(/mission.*(?:empty|trimmed|string)/);
+    },
+  );
 
   test('rejects unknown top-level and nested fields', () => {
     const snapshot = validSnapshot();

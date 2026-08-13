@@ -27,6 +27,7 @@ function project(
   return {
     id: 'project',
     name: 'Project',
+    mission: 'Deliver bounded, reviewable improvements to Project.',
     repositories: [{id: 'owner/repository', branch: 'main'}],
     allowedModels: [],
     ...overrides,
@@ -71,12 +72,14 @@ describe('valid project configuration contract', () => {
       {
         id: 'alpha',
         name: 'Alpha Project',
+        mission: 'Deliver bounded, reviewable improvements to Alpha Project.',
         repositories: [{id: 'Acme/Alpha', branch: 'main'}],
         allowedModels: [],
       },
       {
         id: 'zulu',
         name: 'Zulu Project',
+        mission: 'Deliver bounded, reviewable improvements to Zulu Project.',
         repositories: [{id: 'MixedCase/Zulu', branch: 'release/next'}],
         reward: {
           startsAt: CANONICAL_TIMESTAMP,
@@ -113,6 +116,16 @@ describe('valid project configuration contract', () => {
 });
 
 describe('project and repository identity contract', () => {
+  test.each([undefined, '', ' mission', 'mission '])(
+    'rejects invalid mission %j',
+    async mission => {
+      await expectInvalidProject(
+        project({mission}),
+        /mission.*non-empty trimmed string/,
+      );
+    },
+  );
+
   test('rejects a malformed project id fixture', async () => {
     await expectInvalidFixture('malformed-project-id', /Project id/);
   });

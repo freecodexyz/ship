@@ -59,6 +59,7 @@ function marker(value: unknown = RECEIPT): string {
 const PROJECT: Project = {
   id: 'ship',
   name: 'Ship',
+  mission: 'Deliver bounded, reviewable improvements to Ship.',
   repositories: [{id: parseRepoId('OpenAI/Ship'), branch: 'main'}],
   allowedModels: [{client: 'codex', provider: 'openai', model: 'gpt-5'}],
 };

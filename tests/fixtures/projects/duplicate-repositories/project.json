@@ -1,6 +1,7 @@
 {
   "id": "duplicate-repositories",
   "name": "Duplicate Repositories",
+  "mission": "Deliver bounded, reviewable improvements to Duplicate Repositories.",
   "repositories": [
     {
       "id": "Owner/Repository",

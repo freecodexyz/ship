@@ -23,6 +23,7 @@ const reviewer: Actor = {id: 'actor-reviewer', login: 'reviewer'};
 const project: Project = {
   id: 'ship',
   name: 'Ship',
+  mission: 'Deliver bounded, reviewable improvements to Ship.',
   repositories: [{id: repo, branch: 'main'}],
   allowedModels: [],
 };

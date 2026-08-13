@@ -1,6 +1,7 @@
 {
   "id": "Not-Lowercase",
   "name": "Malformed Project Id",
+  "mission": "Deliver bounded, reviewable improvements to Malformed Project Id.",
   "repositories": [
     {
       "id": "owner/repository",

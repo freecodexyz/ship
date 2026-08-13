@@ -1,6 +1,7 @@
 {
   "id": "malformed-repository",
   "name": "Malformed Repository Id",
+  "mission": "Deliver bounded, reviewable improvements to Malformed Repository Id.",
   "repositories": [
     {
       "id": "owner/repository/path",

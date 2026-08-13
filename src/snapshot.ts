@@ -53,6 +53,7 @@ const WINDOW_FIELDS = new Set(['from', 'to']);
 const PROJECT_FIELDS = new Set([
   'id',
   'name',
+  'mission',
   'repositories',
   'reward',
   'allowedModels',
@@ -187,6 +188,7 @@ function copyProject(project: Project): Project {
   const copy: Project = {
     id: project.id,
     name: project.name,
+    mission: project.mission,
     repositories: project.repositories.map(repository => ({
       id: repository.id,
       branch: repository.branch,
@@ -367,7 +369,7 @@ export function buildSnapshot(
   rewards?: readonly RewardContributor[],
 ): SnapshotWithRewards {
   const snapshot: Snapshot = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     generatedAt,
     window: {from: window.from, to: window.to},
     projects: projects.map(copyProject).sort(compareProjects),
@@ -423,6 +425,14 @@ function parseNonemptyString(value: unknown, context: string): string {
   const parsed = parseString(value, context);
   if (parsed.length === 0) {
     throw new TypeError(`${context} must not be empty.`);
+  }
+  return parsed;
+}
+
+function parseMission(value: unknown, context: string): string {
+  const parsed = parseNonemptyString(value, context);
+  if (parsed.trim() !== parsed) {
+    throw new TypeError(`${context} must be trimmed.`);
   }
   return parsed;
 }
@@ -520,6 +530,7 @@ function parseProject(value: unknown, context: string): Project {
   const parsed: Project = {
     id: parseProjectId(project.id, `${context}.id`),
     name: parseNonemptyString(project.name, `${context}.name`),
+    mission: parseMission(project.mission, `${context}.mission`),
     repositories,
     allowedModels,
   };
@@ -1012,8 +1023,8 @@ function assertAwardLedgerMatchesBuckets(
  */
 export function validateSnapshot(value: unknown): SnapshotWithRewards {
   const snapshot = parseRecord(value, SNAPSHOT_FIELDS, 'Snapshot');
-  if (snapshot.schemaVersion !== 2) {
-    throw new TypeError('Snapshot schemaVersion must be 1.');
+  if (snapshot.schemaVersion !== 3) {
+    throw new TypeError('Snapshot schemaVersion must be 3.');
   }
   parseCanonicalTimestamp(snapshot.generatedAt);
 

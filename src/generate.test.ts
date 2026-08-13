@@ -12,6 +12,7 @@ const directories: string[] = [];
 const project: Project = {
   id: 'alpha',
   name: 'Alpha',
+  mission: 'Deliver bounded, reviewable improvements to Ship.',
   repositories: [{id: 'owner/repository', branch: 'main'}],
   reward: {
     startsAt: parseCanonicalTimestamp('2026-01-01T00:00:00.000Z'),

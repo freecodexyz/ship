@@ -53,6 +53,7 @@ const issue: Issue = {
 const project: Project = {
   id: 'project',
   name: 'Project',
+  mission: 'Deliver bounded, reviewable improvements to Ship.',
   repositories: [repository],
   allowedModels: [],
 };

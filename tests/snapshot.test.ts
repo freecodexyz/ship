@@ -47,6 +47,7 @@ const PROJECTS: readonly Project[] = [
   {
     id: 'zeta',
     name: 'Zeta Project',
+    mission: 'Deliver bounded, reviewable improvements to Zeta Project.',
     repositories: [{id: ZETA_REPOSITORY, branch: 'trunk'}],
     allowedModels: [
       {
@@ -59,6 +60,7 @@ const PROJECTS: readonly Project[] = [
   {
     id: 'alpha',
     name: 'Alpha Project',
+    mission: 'Deliver bounded, reviewable improvements to Alpha Project.',
     repositories: [{id: ALPHA_REPOSITORY, branch: 'main'}],
     reward: {
       startsAt: parseCanonicalTimestamp('2026-07-01T00:00:00.000Z'),

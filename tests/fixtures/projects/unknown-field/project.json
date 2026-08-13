@@ -1,6 +1,7 @@
 {
   "id": "unknown-field",
   "name": "Unknown Field",
+  "mission": "Deliver bounded, reviewable improvements to Unknown Field.",
   "repositories": [
     {
       "id": "owner/repository",

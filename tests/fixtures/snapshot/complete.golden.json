@@ -381,6 +381,7 @@
         }
       ],
       "id": "alpha",
+      "mission": "Deliver bounded, reviewable improvements to Alpha Project.",
       "name": "Alpha Project",
       "repositories": [
         {
@@ -407,6 +408,7 @@
         }
       ],
       "id": "zeta",
+      "mission": "Deliver bounded, reviewable improvements to Zeta Project.",
       "name": "Zeta Project",
       "repositories": [
         {
@@ -500,7 +502,7 @@
       "version": 1
     }
   ],
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "window": {
     "from": "2026-07-01T00:00:00.000Z",
     "to": "2026-09-01T00:00:00.000Z"

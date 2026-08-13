@@ -1,6 +1,7 @@
 {
   "id": "zulu",
   "name": "Zulu Project",
+  "mission": "Deliver bounded, reviewable improvements to Zulu Project.",
   "repositories": [
     {
       "id": "MixedCase/Zulu",

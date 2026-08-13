@@ -1,6 +1,7 @@
 {
   "id": "two",
   "name": "Two",
+  "mission": "Deliver bounded, reviewable improvements to Two.",
   "repositories": [
     {
       "id": "owner/shared",

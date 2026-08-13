@@ -1,6 +1,7 @@
 {
   "id": "invalid-branch",
   "name": "Invalid Branch",
+  "mission": "Deliver bounded, reviewable improvements to Invalid Branch.",
   "repositories": [
     {
       "id": "owner/repository",
