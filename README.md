@@ -51,6 +51,12 @@ token, a UTC start date, and a monthly pool in the token's smallest units. Ship
 does not mint tokens, custody funds, or promise payment for an open issue or pull
 request.
 
+Projects may optionally add `reward.funding` without changing those existing
+reward fields. It distinguishes a `pledged` `proposal-only` pool from a
+`committed` pool settled externally by its owner, and can state that unused
+funding rolls forward without increasing a later month's pool cap. This is
+public policy metadata, not proof that a wallet holds funds or a payment promise.
+
 Canonical points are calculated independently for each contributor, project,
 and UTC calendar month:
 

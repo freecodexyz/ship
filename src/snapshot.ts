@@ -16,6 +16,7 @@ import {
   type CollectionWindow,
   type Project,
   type RewardContributor,
+  type RewardFunding,
   type RunReceipt,
   type ScoreBucket,
   type Snapshot,
@@ -63,9 +64,17 @@ const REWARD_CONFIG_FIELDS = new Set([
   'startsAt',
   'token',
   'monthlyPoolBaseUnits',
+  'funding',
 ]);
 const TOKEN_FIELDS = new Set(['address', 'decimals', 'symbol']);
 const MODEL_FIELDS = new Set(['client', 'provider', 'model']);
+const PLEDGED_FUNDING_FIELDS = new Set(['status', 'settlement', 'unusedFunds']);
+const COMMITTED_FUNDING_FIELDS = new Set([
+  'status',
+  'settlement',
+  'committedBaseUnits',
+  'unusedFunds',
+]);
 const BUCKET_FIELDS = new Set([
   'project',
   'cycle',
@@ -208,6 +217,9 @@ function copyProject(project: Project): Project {
           startsAt: project.reward.startsAt,
           token: {...project.reward.token},
           monthlyPoolBaseUnits: project.reward.monthlyPoolBaseUnits,
+          ...(project.reward.funding === undefined
+            ? {}
+            : {funding: {...project.reward.funding}}),
         },
       };
 }
@@ -498,6 +510,47 @@ function parseModel(
   };
 }
 
+function parseFunding(value: unknown, context: string): RewardFunding {
+  if (!isRecord(value)) {
+    throw new TypeError(`${context} must be an object.`);
+  }
+  if (value.status === 'pledged') {
+    const funding = parseRecord(value, PLEDGED_FUNDING_FIELDS, context);
+    if (
+      funding.settlement !== 'proposal-only' ||
+      funding.unusedFunds !== 'rollover-without-cap-increase'
+    ) {
+      throw new TypeError(`${context} pledged policy is invalid.`);
+    }
+    return {
+      status: 'pledged',
+      settlement: 'proposal-only',
+      unusedFunds: 'rollover-without-cap-increase',
+    };
+  }
+  if (value.status === 'committed') {
+    const funding = parseRecord(value, COMMITTED_FUNDING_FIELDS, context);
+    const committedBaseUnits = parseIntegerString(
+      funding.committedBaseUnits,
+      `${context}.committedBaseUnits`,
+    );
+    if (
+      funding.settlement !== 'owner-executed' ||
+      funding.unusedFunds !== 'rollover-without-cap-increase' ||
+      committedBaseUnits === '0'
+    ) {
+      throw new TypeError(`${context} committed policy is invalid.`);
+    }
+    return {
+      status: 'committed',
+      settlement: 'owner-executed',
+      committedBaseUnits,
+      unusedFunds: 'rollover-without-cap-increase',
+    };
+  }
+  throw new TypeError(`${context}.status is unsupported.`);
+}
+
 function parseProject(value: unknown, context: string): Project {
   const project = parseRecord(value, PROJECT_FIELDS, context);
   const repositories = parseArray(
@@ -570,6 +623,10 @@ function parseProject(value: unknown, context: string): Project {
   if (symbol.trim() !== symbol) {
     throw new TypeError(`${context}.reward.token.symbol must be trimmed.`);
   }
+  const funding =
+    reward.funding === undefined
+      ? undefined
+      : parseFunding(reward.funding, `${context}.reward.funding`);
   return {
     ...parsed,
     reward: {
@@ -583,6 +640,7 @@ function parseProject(value: unknown, context: string): Project {
         reward.monthlyPoolBaseUnits,
         `${context}.reward.monthlyPoolBaseUnits`,
       ),
+      ...(funding === undefined ? {} : {funding}),
     },
   };
 }

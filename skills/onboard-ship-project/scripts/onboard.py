@@ -85,7 +85,7 @@ def validate_project(value: Any) -> dict[str, Any]:
         model_keys.add(key)
     reward = project["reward"]
     if reward is not None:
-        reward = record(reward, {"startsAt", "token", "monthlyPoolBaseUnits"}, "project.reward")
+        reward = record(reward, {"startsAt", "token", "monthlyPoolBaseUnits", "funding"}, "project.reward")
         if not isinstance(reward["startsAt"], str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z", reward["startsAt"]):
             raise InvalidPlan("project.reward.startsAt must be a canonical timestamp")
         if not isinstance(reward["monthlyPoolBaseUnits"], str) or not INTEGER.fullmatch(reward["monthlyPoolBaseUnits"]):
@@ -96,6 +96,20 @@ def validate_project(value: Any) -> dict[str, Any]:
         if not isinstance(token["decimals"], int) or isinstance(token["decimals"], bool) or not 0 <= token["decimals"] <= 255:
             raise InvalidPlan("reward token decimals are invalid")
         text(token["symbol"], "reward token symbol", maximum=32)
+        funding = reward.get("funding")
+        if funding is not None:
+            if not isinstance(funding, dict):
+                raise InvalidPlan("project.reward.funding must be an object")
+            if funding.get("status") == "pledged":
+                funding = record(funding, {"status", "settlement", "unusedFunds"}, "project.reward.funding")
+                if funding["settlement"] != "proposal-only" or funding["unusedFunds"] != "rollover-without-cap-increase":
+                    raise InvalidPlan("pledged reward funding policy is invalid")
+            elif funding.get("status") == "committed":
+                funding = record(funding, {"status", "settlement", "committedBaseUnits", "unusedFunds"}, "project.reward.funding")
+                if (funding["settlement"] != "owner-executed" or funding["unusedFunds"] != "rollover-without-cap-increase" or not isinstance(funding["committedBaseUnits"], str) or not INTEGER.fullmatch(funding["committedBaseUnits"]) or funding["committedBaseUnits"] == "0"):
+                    raise InvalidPlan("committed reward funding policy is invalid")
+            else:
+                raise InvalidPlan("project.reward.funding.status is unsupported")
     return project
 
 def validate_policy(value: Any) -> dict[str, Any]:

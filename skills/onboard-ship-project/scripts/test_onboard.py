@@ -77,6 +77,20 @@ class OnboardTests(unittest.TestCase):
     def test_validates_complete_resolved_plan(self) -> None:
         self.assertEqual(ONBOARD.validate(valid_plan())["project"]["id"], "alpha-project")
 
+    def test_validates_optional_reward_funding_metadata(self) -> None:
+        plan = valid_plan()
+        plan["project"]["reward"] = {
+            "startsAt": "2026-10-01T00:00:00.000Z",
+            "token": {"address": "0x1111111111111111111111111111111111111111", "decimals": 6, "symbol": "USDC"},
+            "monthlyPoolBaseUnits": "1000000",
+            "funding": {
+                "status": "pledged",
+                "settlement": "proposal-only",
+                "unusedFunds": "rollover-without-cap-increase",
+            },
+        }
+        self.assertEqual(ONBOARD.validate(plan)["project"]["reward"]["funding"]["status"], "pledged")
+
     def test_rejects_unknown_fields(self) -> None:
         plan = valid_plan()
         plan["policy"]["customCode"] = "return true"

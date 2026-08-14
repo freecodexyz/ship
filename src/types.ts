@@ -45,7 +45,24 @@ export type RewardConfig = {
   readonly token: RewardToken;
   /** A canonical integer amount in the token's smallest indivisible unit. */
   readonly monthlyPoolBaseUnits: string;
+  /** Optional public statement of how the advertised monthly pool is funded. */
+  readonly funding?: RewardFunding;
 };
+
+/** Public funding and settlement policy for an advertised monthly reward pool. */
+export type RewardFunding =
+  | {
+      readonly status: 'pledged';
+      readonly settlement: 'proposal-only';
+      readonly unusedFunds: 'rollover-without-cap-increase';
+    }
+  | {
+      readonly status: 'committed';
+      readonly settlement: 'owner-executed';
+      /** A positive canonical integer in the reward token's base units. */
+      readonly committedBaseUnits: string;
+      readonly unusedFunds: 'rollover-without-cap-increase';
+    };
 
 /** The inclusive start and exclusive end of collected GitHub data. */
 export type CollectionWindow = {

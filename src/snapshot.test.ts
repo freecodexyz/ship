@@ -225,6 +225,35 @@ describe('buildSnapshot', () => {
     expect(snapshot.receipts[0]).not.toBe(receipts[0]);
     expect(snapshot.rewards).toBeUndefined();
   });
+
+  test('preserves optional reward funding metadata', () => {
+    const actor: Actor = {id: 'actor', login: 'contributor'};
+    const fundedProject: Project = {
+      ...project('alpha'),
+      reward: {
+        startsAt: parseCanonicalTimestamp('2026-08-01T00:00:00.000Z'),
+        token: {address: `0x${'1'.repeat(40)}`, decimals: 6, symbol: 'USDC'},
+        monthlyPoolBaseUnits: '1000000',
+        funding: {
+          status: 'pledged',
+          settlement: 'proposal-only',
+          unusedFunds: 'rollover-without-cap-increase',
+        },
+      },
+    };
+    const snapshot = buildSnapshot(
+      generatedAt,
+      window,
+      [fundedProject],
+      [bucket('alpha', '2026-08', 10, actor)],
+      [award('award', '2026-08-01T00:00:00.000Z', actor)],
+      [],
+    );
+
+    expect(validateSnapshot(snapshot).projects[0]?.reward?.funding).toEqual(
+      fundedProject.reward?.funding,
+    );
+  });
 });
 
 function validSnapshot() {

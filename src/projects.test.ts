@@ -124,6 +124,38 @@ test('accepts a valid canonical reward', async () => {
   );
 });
 
+test('loads optional funding metadata without changing reward paths', async () => {
+  await withProjectFiles(
+    {
+      'funded.json': {
+        ...project('funded'),
+        reward: {
+          startsAt: '2026-08-01T00:00:00.000Z',
+          token: {address: `0x${'1'.repeat(40)}`, decimals: 6, symbol: 'USDC'},
+          monthlyPoolBaseUnits: '1000000',
+          funding: {
+            status: 'committed',
+            settlement: 'owner-executed',
+            committedBaseUnits: '2500000',
+            unusedFunds: 'rollover-without-cap-increase',
+          },
+        },
+      },
+    },
+    async directory => {
+      const reward = (await loadProjects(directory)).projects[0]?.reward;
+
+      expect(reward?.monthlyPoolBaseUnits).toBe('1000000');
+      expect(reward?.funding).toEqual({
+        status: 'committed',
+        settlement: 'owner-executed',
+        committedBaseUnits: '2500000',
+        unusedFunds: 'rollover-without-cap-increase',
+      });
+    },
+  );
+});
+
 test('rejects duplicate project ids', async () => {
   await expectInvalid({
     'one.json': project('same', 'owner/one'),
@@ -172,6 +204,39 @@ test.each([
       reward: {
         startsAt: '2026-08-01T00:00:00.000Z',
         monthlyPoolBaseUnits: '1.5',
+      },
+    },
+  ],
+  [
+    'invalid pledged funding metadata',
+    {
+      ...project('valid'),
+      reward: {
+        startsAt: '2026-08-01T00:00:00.000Z',
+        token: {address: `0x${'1'.repeat(40)}`, decimals: 18, symbol: 'SHIP'},
+        monthlyPoolBaseUnits: '1',
+        funding: {
+          status: 'pledged',
+          settlement: 'owner-executed',
+          unusedFunds: 'rollover-without-cap-increase',
+        },
+      },
+    },
+  ],
+  [
+    'invalid committed funding metadata',
+    {
+      ...project('valid'),
+      reward: {
+        startsAt: '2026-08-01T00:00:00.000Z',
+        token: {address: `0x${'1'.repeat(40)}`, decimals: 18, symbol: 'SHIP'},
+        monthlyPoolBaseUnits: '1',
+        funding: {
+          status: 'committed',
+          settlement: 'owner-executed',
+          committedBaseUnits: '0',
+          unusedFunds: 'rollover-without-cap-increase',
+        },
       },
     },
   ],
