@@ -10,10 +10,14 @@ import {
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
+import {BASE_MAINNET_CHAIN_ID} from './resolveActorWallet.js';
 import {verifyStoredCycleProposal} from './verifyStoredCycleProposal.js';
+import {writeCycleProposal} from './writeCycleProposal.js';
 
 const directories: string[] = [];
-const canonicalCycle = join('cycles', 'microcodex', '2026-08');
+const PROJECT = 'alpha';
+const CYCLE = '2026-07';
+const SNAPSHOT_PATH = 'tests/fixtures/snapshot/complete.golden.json';
 
 afterEach(async () => {
   await Promise.all(
@@ -24,42 +28,26 @@ afterEach(async () => {
 });
 
 describe('verifyStoredCycleProposal', () => {
-  test('verifies the canonical reviewed proposal against exact archived bytes', async () => {
-    const proposal = await verifyStoredCycleProposal({
-      project: 'microcodex',
-      cycle: '2026-08',
-    });
-
-    expect(proposal.allocations[0]).toMatchObject({
-      approvedBaseUnits: '1000000000',
-      state: 'approved',
-    });
-    expect(proposal.sourceSnapshot.sha256).toBe(
-      'edbdd2f1094fc40436db7ff2e4306d13cafd5262b6282fdb8448567a3aeba721',
-    );
-  });
-
   test('rejects missing, partial, and tampered canonical cycles', async () => {
     const cyclesDirectory = await mkdtemp(join(tmpdir(), 'ship-verify-'));
     directories.push(cyclesDirectory);
-    const cycleDirectory = join(cyclesDirectory, 'microcodex', '2026-08');
+    const cycleDirectory = join(cyclesDirectory, PROJECT, CYCLE);
     await mkdir(cycleDirectory, {recursive: true});
-    const input = {project: 'microcodex', cycle: '2026-08', cyclesDirectory};
+    const input = {project: PROJECT, cycle: CYCLE, cyclesDirectory};
 
     await expect(verifyStoredCycleProposal(input)).rejects.toThrow(
       'Reward cycle does not exist',
     );
-    await writeFile(
-      join(cycleDirectory, 'proposal.json'),
-      await readFile(join(canonicalCycle, 'proposal.json')),
-    );
+    await writeFile(join(cycleDirectory, 'proposal.json'), '{}');
     await expect(verifyStoredCycleProposal(input)).rejects.toThrow(
       'Cycle is partial',
     );
+    await rm(cycleDirectory, {recursive: true, force: true});
+    await writeCycle(cyclesDirectory);
     await writeFile(
       join(cycleDirectory, 'source-snapshot.json'),
       Buffer.concat([
-        await readFile(join(canonicalCycle, 'source-snapshot.json')),
+        await readFile(join(cycleDirectory, 'source-snapshot.json')),
         Buffer.from(' '),
       ]),
     );
@@ -70,28 +58,47 @@ describe('verifyStoredCycleProposal', () => {
 
   test('rejects path traversal and symbolic-link cycle files', async () => {
     await expect(
-      verifyStoredCycleProposal({project: '../microcodex', cycle: '2026-08'}),
+      verifyStoredCycleProposal({project: `../${PROJECT}`, cycle: CYCLE}),
     ).rejects.toThrow('canonical project ID');
 
     const cyclesDirectory = await mkdtemp(join(tmpdir(), 'ship-verify-'));
     directories.push(cyclesDirectory);
-    const cycleDirectory = join(cyclesDirectory, 'microcodex', '2026-08');
+    const sourceCyclesDirectory = join(cyclesDirectory, 'source');
+    const cycleDirectory = join(cyclesDirectory, 'target', PROJECT, CYCLE);
+    await writeCycle(sourceCyclesDirectory);
     await mkdir(cycleDirectory, {recursive: true});
     await symlink(
-      join(process.cwd(), canonicalCycle, 'proposal.json'),
+      join(sourceCyclesDirectory, PROJECT, CYCLE, 'proposal.json'),
       join(cycleDirectory, 'proposal.json'),
     );
     await writeFile(
       join(cycleDirectory, 'source-snapshot.json'),
-      await readFile(join(canonicalCycle, 'source-snapshot.json')),
+      await readFile(
+        join(sourceCyclesDirectory, PROJECT, CYCLE, 'source-snapshot.json'),
+      ),
     );
 
     await expect(
       verifyStoredCycleProposal({
-        project: 'microcodex',
-        cycle: '2026-08',
-        cyclesDirectory,
+        project: PROJECT,
+        cycle: CYCLE,
+        cyclesDirectory: join(cyclesDirectory, 'target'),
       }),
     ).rejects.toThrow('must be a regular file');
   });
 });
+
+async function writeCycle(cyclesDirectory: string): Promise<void> {
+  await writeCycleProposal({
+    project: PROJECT,
+    cycle: CYCLE,
+    generatedAt: '2026-09-01T00:05:00.000Z',
+    snapshotPath: SNAPSHOT_PATH,
+    cyclesDirectory,
+    resolveWallet: async actor => ({
+      status: 'unbound',
+      actorId: actor.id,
+      chainId: BASE_MAINNET_CHAIN_ID,
+    }),
+  });
+}

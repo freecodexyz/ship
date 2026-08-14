@@ -103,7 +103,7 @@ describe('CLI', () => {
     const stdout = captureOutput();
     const stderr = captureOutput();
     const proposal = {
-      project: 'microcodex',
+      project: 'test-project',
       cycle: '2026-08',
       allocations: [],
     } as unknown as CycleProposal;
@@ -112,7 +112,7 @@ describe('CLI', () => {
       [
         'proposal',
         '--project',
-        'microcodex',
+        'test-project',
         '--cycle',
         '2026-08',
         '--generated-at',
@@ -143,10 +143,12 @@ describe('CLI', () => {
 
     expect(exitCode).toBe(0);
     expect(stderr.text()).toBe('');
-    expect(stdout.text()).toContain('cycles/microcodex/2026-08/proposal.json');
+    expect(stdout.text()).toContain(
+      'cycles/test-project/2026-08/proposal.json',
+    );
     expect(writes).toHaveLength(1);
     expect(writes[0]).toMatchObject({
-      project: 'microcodex',
+      project: 'test-project',
       cycle: '2026-08',
       generatedAt: '2026-09-01T00:00:00.000Z',
       snapshotPath: 'dist/snapshot.json',
@@ -160,7 +162,7 @@ describe('CLI', () => {
       [
         'proposal',
         '--project',
-        'microcodex',
+        'test-project',
         '--cycle',
         '2026-08',
         '--generated-at',
@@ -211,7 +213,7 @@ describe('CLI', () => {
       [
         'proposal',
         '--project',
-        'microcodex',
+        'test-project',
         '--cycle',
         '2026-08',
         '--generated-at',
@@ -230,7 +232,7 @@ describe('CLI', () => {
     );
 
     const invalidCycle = await runCli(
-      ['proposal', '--project', 'microcodex', '--cycle', 'August'],
+      ['proposal', '--project', 'test-project', '--cycle', 'August'],
       {GITHUB_TOKEN: 'token'},
       stdout,
       stderr,
@@ -245,7 +247,7 @@ describe('CLI', () => {
     const stderr = captureOutput();
     let verified: unknown;
     const exitCode = await runCli(
-      ['verify', '--project', 'microcodex', '--cycle', '2026-08'],
+      ['verify', '--project', 'test-project', '--cycle', '2026-08'],
       {},
       stdout,
       stderr,
@@ -262,7 +264,7 @@ describe('CLI', () => {
         verifyProposal: async input => {
           verified = input;
           return {
-            project: 'microcodex',
+            project: 'test-project',
             cycle: '2026-08',
             allocations: [{}],
             sourceSnapshot: {sha256: 'a'.repeat(64)},
@@ -273,9 +275,9 @@ describe('CLI', () => {
 
     expect(exitCode).toBe(0);
     expect(stderr.text()).toBe('');
-    expect(verified).toEqual({project: 'microcodex', cycle: '2026-08'});
+    expect(verified).toEqual({project: 'test-project', cycle: '2026-08'});
     expect(stdout.text()).toBe(
-      `Verified 1 allocations for microcodex/2026-08; source SHA-256 ${'a'.repeat(64)}.\n`,
+      `Verified 1 allocations for test-project/2026-08; source SHA-256 ${'a'.repeat(64)}.\n`,
     );
   });
 
@@ -297,7 +299,7 @@ describe('CLI', () => {
       },
     };
     const invalid = await runCli(
-      ['verify', '--project', 'microcodex', '--cycle', 'August'],
+      ['verify', '--project', 'test-project', '--cycle', 'August'],
       {},
       stdout,
       stderr,
@@ -308,7 +310,7 @@ describe('CLI', () => {
     expect(stderr.text()).toContain('Usage: bun src/cli.ts verify');
 
     const failed = await runCli(
-      ['verify', '--project', 'microcodex', '--cycle', '2026-08'],
+      ['verify', '--project', 'test-project', '--cycle', '2026-08'],
       {},
       stdout,
       stderr,
@@ -328,11 +330,11 @@ describe('CLI', () => {
       [
         'review',
         '--project',
-        'microcodex',
+        'test-project',
         '--cycle',
         '2026-08',
         '--intent',
-        'reward_microcodex_2026_08_0001_u_actor',
+        'reward_test_project_2026_08_0001_u_actor',
         '--changed-at',
         '2026-09-02T00:00:00.000Z',
         '--state',
@@ -366,7 +368,7 @@ describe('CLI', () => {
     expect(stderr.text()).toBe('');
     expect(stdout.text()).toContain('review now ends 2026-09-16');
     expect(reviewed).toMatchObject({
-      project: 'microcodex',
+      project: 'test-project',
       state: 'approved',
       approvedBaseUnits: '1000',
       adjustmentReason: null,
@@ -380,11 +382,11 @@ describe('CLI', () => {
       [
         'review',
         '--project',
-        'microcodex',
+        'test-project',
         '--cycle',
         '2026-08',
         '--intent',
-        'reward_microcodex_2026_08_0001_u_actor',
+        'reward_test_project_2026_08_0001_u_actor',
         '--changed-at',
         '2026-09-02T00:00:00.000Z',
         '--state',
