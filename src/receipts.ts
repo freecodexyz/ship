@@ -307,15 +307,22 @@ export function validateReceipt(
 
   const receiptRepo = parseRepoId(parsed.repo);
   const pullRequestRepo = parseRepoId(pullRequest.repo);
-  if (!sameRepository(receiptRepo, pullRequestRepo)) {
-    throw new TypeError('Receipt repository does not match the pull request.');
-  }
-  if (
-    !project.repositories.some(repository =>
-      sameRepository(repository.id, pullRequestRepo),
-    )
-  ) {
+  const repository = project.repositories.find(candidate =>
+    sameRepository(candidate.id, pullRequestRepo),
+  );
+  if (repository === undefined) {
     throw new TypeError('Pull-request repository is not owned by the project.');
+  }
+  const receiptMatchesCurrent = sameRepository(receiptRepo, repository.id);
+  const receiptMatchesPrevious = repository.previousIds?.some(
+    previous =>
+      sameRepository(receiptRepo, previous.id) &&
+      completedAt <= parseCanonicalTimestamp(previous.retiredAt),
+  );
+  if (!receiptMatchesCurrent && receiptMatchesPrevious !== true) {
+    throw new TypeError(
+      'Receipt repository does not match the pull request repository lineage at completion time.',
+    );
   }
 
   if (!isAllowedModel(parsed, project)) {

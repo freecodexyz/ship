@@ -15,6 +15,8 @@ const RUN_ID = /^run_[0-9A-HJKMNP-TV-Z]{26}$/u;
 const SHA = /^[a-f0-9]{40}$/u;
 const SHA256 = /^[a-f0-9]{64}$/u;
 const INTEGER = /^(?:0|[1-9]\d*)$/u;
+const REPO = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?\/[A-Za-z0-9._-]{1,100}$/u;
+const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u;
 
 function fail(message) { throw new TypeError(message); }
 function sha256(value) { return createHash('sha256').update(value).digest('hex'); }
@@ -46,11 +48,30 @@ function repositoryFromRemote(url) {
   const match = url.match(/^(?:https:\/\/github\.com\/|git@github\.com:)([^/\s]+\/[^/\s]+?)(?:\.git)?$/iu);
   return match ? match[1] : null;
 }
-function requireRepository(path) {
+function repositoryIdentities(at) {
+  if (!Array.isArray(project.repositories) || project.repositories.length === 0) fail('project.repositories must be a non-empty array');
+  const identities = []; const seen = new Set();
+  for (const repository of project.repositories) {
+    if (!repository || typeof repository !== 'object' || typeof repository.id !== 'string' || !REPO.test(repository.id)) fail('project contains an invalid repository');
+    const normalized = repository.id.toLowerCase();
+    if (seen.has(normalized)) fail('project contains a duplicate repository identity');
+    seen.add(normalized); identities.push({id: repository.id, available: true});
+    if (repository.previousIds === undefined) continue;
+    if (!Array.isArray(repository.previousIds) || repository.previousIds.length === 0) fail('repository.previousIds must be a non-empty array');
+    for (const previous of repository.previousIds) {
+      if (!previous || typeof previous !== 'object' || typeof previous.id !== 'string' || !REPO.test(previous.id) || typeof previous.retiredAt !== 'string' || !TIMESTAMP.test(previous.retiredAt) || new Date(previous.retiredAt).toISOString() !== previous.retiredAt) fail('project contains an invalid previous repository identity');
+      const previousNormalized = previous.id.toLowerCase();
+      if (seen.has(previousNormalized)) fail('project contains a duplicate repository identity');
+      seen.add(previousNormalized); identities.push({id: previous.id, available: at <= previous.retiredAt});
+    }
+  }
+  return identities;
+}
+function requireRepository(path, at) {
   const root = realpathSync(resolve(path));
   if (realpathSync(git(root, ['rev-parse', '--show-toplevel'])) !== root) fail('--repo-root must be the Git worktree root');
   const remotes = git(root, ['remote', '-v']).split(/\r?\n/u).map(line => repositoryFromRemote(line.trim().split(/\s+/u)[1] ?? '')).filter(Boolean);
-  const configured = project.repositories.find(repository => remotes.some(remote => remote.toLowerCase() === repository.id.toLowerCase()));
+  const configured = repositoryIdentities(at).find(identity => identity.available && remotes.some(remote => remote.toLowerCase() === identity.id.toLowerCase()));
   if (!configured) fail('--repo-root must reference a repository configured for this project');
   return {root, repository: configured.id};
 }
@@ -196,18 +217,18 @@ function parseArguments(values) {
 }
 function output(value, json) { process.stdout.write(json ? `${JSON.stringify(value, null, 2)}\n` : `${value.message}\n`); }
 function start(options) {
-  const repository = requireRepository(options.repoRoot); const provenance = skillProvenance(); const id = runId();
-  const state = {version: 1, runId: id, project: project.id, repo: repository.repository, rootHash: sha256(repository.root), startedAt: isoNow(), agent: {client: options.client, provider: options.provider, model: options.model}, skill: provenance, baseline: collectUsage(options.client, repository.root)};
+  const startedAt = isoNow(); const repository = requireRepository(options.repoRoot, startedAt); const provenance = skillProvenance(); const id = runId();
+  const state = {version: 1, runId: id, project: project.id, repo: repository.repository, rootHash: sha256(repository.root), startedAt, agent: {client: options.client, provider: options.provider, model: options.model}, skill: provenance, baseline: collectUsage(options.client, repository.root)};
   const paths = runPaths(); atomicJson(join(paths.active, `${id}.json`), state, true);
   output({runId: id, usageStatus: state.baseline ? 'capturing' : 'unavailable', message: `Ship receipt run started. Keep this id: ${id}`}, options.json);
 }
 function finish(options) {
-  const repository = requireRepository(options.repoRoot); const paths = runPaths(); const active = join(paths.active, `${options.run}.json`); const completed = join(paths.completed, `${options.run}.json`);
+  const completedAt = isoNow(); const repository = requireRepository(options.repoRoot, completedAt); const paths = runPaths(); const active = join(paths.active, `${options.run}.json`); const completed = join(paths.completed, `${options.run}.json`);
   if (!existsSync(active) && existsSync(completed)) { const saved = readState(completed, 'completed run'); output({...saved, message: saved.marker}, options.json); return; }
   if (!existsSync(active)) fail('active run state was not found');
   const state = readState(active, 'active run');
   if (state.runId !== options.run || state.project !== project.id || state.repo.toLowerCase() !== repository.repository.toLowerCase() || state.rootHash !== sha256(repository.root) || canonicalJson(state.agent) !== canonicalJson({client: options.client, provider: options.provider, model: options.model}) || !SHA256.test(state.skill?.sha256)) fail('run state does not match this project, repository, model, or checkout');
-  const unsigned = {version: 1, runId: state.runId, project: state.project, repo: state.repo, startedAt: state.startedAt, completedAt: isoNow(), agent: state.agent, skill: state.skill, usage: usageDelta(state.baseline, collectUsage(options.client, repository.root), options.client), device: {keyId: '', publicKey: ''}};
+  const unsigned = {version: 1, runId: state.runId, project: state.project, repo: state.repo, startedAt: state.startedAt, completedAt, agent: state.agent, skill: state.skill, usage: usageDelta(state.baseline, collectUsage(options.client, repository.root), options.client), device: {keyId: '', publicKey: ''}};
   const digest = trajectory(options.trajectory); if (digest) unsigned.trajectorySha256 = digest;
   const key = deviceKey(); unsigned.device = {keyId: key.keyId, publicKey: key.publicKey};
   const receipt = {...unsigned, signature: sign(null, Buffer.from(canonicalJson(unsigned), 'utf8'), key.privateKey).toString('base64')};

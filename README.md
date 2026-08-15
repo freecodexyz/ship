@@ -135,6 +135,13 @@ verification, evidence, allowed agent models, and optional reward pool. The
 agent then generates a GitHub handoff for the project manifest and, with a Ship
 maintainer, the project-specific contributor skill.
 
+If a configured repository changes ownership, keep `repositories[].id` as its
+current `owner/name` and optionally record each former name in
+`repositories[].previousIds` with the canonical UTC `retiredAt` instant. Former
+names preserve time-bounded receipt continuity only: live discovery and scoring
+ownership always use the current id, and all active and former ids must be
+globally unique.
+
 Your job is to direct and approve, not to write Ship JSON or operate the skill's
 scripts. You remain in control of browser actions, the onboarding pull request,
 project review and merge policy, reward funding, and payment.

@@ -23,6 +23,13 @@ export type Project = {
 export type ProjectRepository = {
   readonly id: RepoId;
   readonly branch: string;
+  readonly previousIds?: readonly RepositoryPreviousId[];
+};
+
+/** A former GitHub repository id accepted for receipts through its retirement. */
+export type RepositoryPreviousId = {
+  readonly id: RepoId;
+  readonly retiredAt: CanonicalTimestamp;
 };
 
 /** An agent client, provider, and model tuple allowed by a project. */

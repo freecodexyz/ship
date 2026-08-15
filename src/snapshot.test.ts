@@ -254,6 +254,43 @@ describe('buildSnapshot', () => {
       fundedProject.reward?.funding,
     );
   });
+
+  test('preserves optional repository transfer history', () => {
+    const transferredProject: Project = {
+      ...project('alpha'),
+      repositories: [
+        {
+          id: 'bob/repo' as RepoId,
+          branch: 'main',
+          previousIds: [
+            {
+              id: 'owner/repo' as RepoId,
+              retiredAt: parseCanonicalTimestamp('2026-08-02T00:00:00.000Z'),
+            },
+          ],
+        },
+      ],
+    };
+    const actor: Actor = {id: 'actor', login: 'contributor'};
+    const snapshot = buildSnapshot(
+      generatedAt,
+      window,
+      [transferredProject],
+      [bucket('alpha', '2026-08', 10, actor)],
+      [
+        {
+          ...award('award', '2026-08-01T02:00:00.000Z', actor),
+          repo: 'bob/repo' as RepoId,
+          runId: 'run',
+        },
+      ],
+      [receipt('run')],
+    );
+
+    expect(
+      validateSnapshot(snapshot).projects[0]?.repositories[0]?.previousIds,
+    ).toEqual(transferredProject.repositories[0]?.previousIds);
+  });
 });
 
 function validSnapshot() {
@@ -367,6 +404,31 @@ describe('validateSnapshot', () => {
       validateSnapshot({
         ...snapshot,
         projects: [firstProject, project('beta')],
+      }),
+    ).toThrow('duplicate ownership');
+    expect(() =>
+      validateSnapshot({
+        ...snapshot,
+        projects: [
+          firstProject,
+          {
+            ...project('beta'),
+            repositories: [
+              {
+                id: 'owner/current' as RepoId,
+                branch: 'main',
+                previousIds: [
+                  {
+                    id: 'OWNER/REPO' as RepoId,
+                    retiredAt: parseCanonicalTimestamp(
+                      '2026-08-01T00:00:00.000Z',
+                    ),
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       }),
     ).toThrow('duplicate ownership');
     expect(() =>

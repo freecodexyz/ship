@@ -8,6 +8,8 @@ Read: repository metadata; `AGENTS.md`/`CLAUDE.md`; `CONTRIBUTING.md`; `SECURITY
 
 Always confirm repositories, integration branches, mission, modes, issue readiness, claim semantics, exclusions, verification, evidence, and allowed agent models. An empty allowed-model list disables valid receipt production. Never infer credentials, deployment, publication, or mutation authority; the receipt runner may create only its local device key and run state.
 
+For a verified repository ownership transfer, configure the current `owner/name` in `repositories[].id` and put former names in `previousIds` as `{id, retiredAt}` entries. Use the actual canonical UTC retirement instant. Former ids are only time-bounded receipt lineage; never use them for live discovery, active scoring ownership, or a guessed rename. Repository identities must remain unique across current and former ids.
+
 ## Resolved fields
 
 - `modes`: any of `implementation`, `review`, `validation`, `testing`, `documentation`, `research`. Enable only modes the repository can accept and review.

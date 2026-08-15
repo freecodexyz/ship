@@ -97,6 +97,44 @@ test('returns undefined for an unowned repository', async () => {
   );
 });
 
+test('loads repository transfer history without making aliases active', async () => {
+  await withProjectFiles(
+    {
+      'project.json': {
+        ...project('project', 'bob/repository'),
+        repositories: [
+          {
+            id: 'bob/repository',
+            branch: 'main',
+            previousIds: [
+              {
+                id: 'foo/repository',
+                retiredAt: '2026-08-01T00:00:00.000Z',
+              },
+            ],
+          },
+        ],
+      },
+    },
+    async directory => {
+      const loaded = await loadProjects(directory);
+
+      expect(loaded.projects[0]?.repositories[0]?.previousIds).toEqual([
+        {
+          id: 'foo/repository',
+          retiredAt: parseCanonicalTimestamp('2026-08-01T00:00:00.000Z'),
+        },
+      ]);
+      expect(
+        projectForRepo('bob/repository', loaded.projectsByRepo),
+      ).toBeDefined();
+      expect(
+        projectForRepo('foo/repository', loaded.projectsByRepo),
+      ).toBeUndefined();
+    },
+  );
+});
+
 test('accepts a valid canonical reward', async () => {
   await withProjectFiles(
     {
@@ -170,6 +208,24 @@ test('rejects case-insensitive duplicate repository ownership', async () => {
   });
 });
 
+test('rejects collisions between active and previous repository identities', async () => {
+  await expectInvalid({
+    'one.json': project('one', 'Owner/Repo'),
+    'two.json': {
+      ...project('two', 'owner/current'),
+      repositories: [
+        {
+          id: 'owner/current',
+          branch: 'main',
+          previousIds: [
+            {id: 'owner/repo', retiredAt: '2026-08-01T00:00:00.000Z'},
+          ],
+        },
+      ],
+    },
+  });
+});
+
 test.each([
   ['malformed project id', {...project('valid'), id: 'Not-Lowercase'}],
   [
@@ -184,6 +240,21 @@ test.each([
     {
       ...project('valid'),
       repositories: [{id: 'owner/repo', branch: 'bad..ref'}],
+    },
+  ],
+  [
+    'invalid previous repository retirement timestamp',
+    {
+      ...project('valid'),
+      repositories: [
+        {
+          id: 'owner/repo',
+          branch: 'main',
+          previousIds: [
+            {id: 'old/repo', retiredAt: '2026-02-30T00:00:00.000Z'},
+          ],
+        },
+      ],
     },
   ],
   [

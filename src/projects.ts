@@ -7,6 +7,7 @@ import {
   type Project,
   type ProjectModel,
   type ProjectRepository,
+  type RepositoryPreviousId,
   type RepoId,
   type RewardConfig,
   type RewardFunding,
@@ -24,7 +25,8 @@ const PROJECT_FIELDS = new Set([
   'reward',
   'allowedModels',
 ]);
-const REPOSITORY_FIELDS = new Set(['id', 'branch']);
+const REPOSITORY_FIELDS = new Set(['id', 'branch', 'previousIds']);
+const PREVIOUS_REPOSITORY_FIELDS = new Set(['id', 'retiredAt']);
 const REWARD_FIELDS = new Set([
   'startsAt',
   'token',
@@ -127,10 +129,40 @@ function parseBranch(value: unknown, context: string): string {
 
 function parseRepository(value: unknown, context: string): ProjectRepository {
   const record = parseRecord(value, REPOSITORY_FIELDS, context);
+  const id = parseRepoId(record.id);
+  let previousIds: readonly RepositoryPreviousId[] | undefined;
+  if (record.previousIds !== undefined) {
+    if (!Array.isArray(record.previousIds) || record.previousIds.length === 0) {
+      throw new TypeError(`${context}.previousIds must be a non-empty array.`);
+    }
+    previousIds = record.previousIds.map((previousValue, index) => {
+      const previous = parseRecord(
+        previousValue,
+        PREVIOUS_REPOSITORY_FIELDS,
+        `${context}.previousIds[${index}]`,
+      );
+      return {
+        id: parseRepoId(previous.id),
+        retiredAt: parseCanonicalTimestamp(previous.retiredAt),
+      };
+    });
+
+    const identities = new Set([id.toLowerCase()]);
+    for (const previous of previousIds) {
+      const normalized = previous.id.toLowerCase();
+      if (identities.has(normalized)) {
+        throw new TypeError(
+          `${context}.previousIds contains a duplicate repository identity.`,
+        );
+      }
+      identities.add(normalized);
+    }
+  }
 
   return {
-    id: parseRepoId(record.id),
+    id,
     branch: parseBranch(record.branch, `${context}.branch`),
+    ...(previousIds === undefined ? {} : {previousIds}),
   };
 }
 
@@ -314,6 +346,10 @@ export async function loadProjects(
 
   const projectIds = new Set<string>();
   const projectsByRepo = new Map<RepoId, Project>();
+  const repositoryIdentityOwners = new Map<
+    RepoId,
+    {readonly project: Project; readonly currentId: RepoId}
+  >();
   for (const project of projects) {
     if (projectIds.has(project.id)) {
       throw new TypeError(`Duplicate project id "${project.id}".`);
@@ -321,15 +357,24 @@ export async function loadProjects(
     projectIds.add(project.id);
 
     for (const repository of project.repositories) {
-      const normalizedId = repository.id.toLowerCase();
-      const normalizedRepoId = normalizedId as RepoId;
-      const owner = projectsByRepo.get(normalizedRepoId);
-      if (owner !== undefined) {
-        throw new TypeError(
-          `Repository "${repository.id}" is claimed by both "${owner.id}" and "${project.id}".`,
-        );
+      const identities = [
+        repository.id,
+        ...(repository.previousIds?.map(previous => previous.id) ?? []),
+      ];
+      for (const identity of identities) {
+        const normalizedRepoId = identity.toLowerCase() as RepoId;
+        const owner = repositoryIdentityOwners.get(normalizedRepoId);
+        if (owner !== undefined) {
+          throw new TypeError(
+            `Repository identity "${identity}" is claimed by both "${owner.project.id}" (${owner.currentId}) and "${project.id}" (${repository.id}).`,
+          );
+        }
+        repositoryIdentityOwners.set(normalizedRepoId, {
+          project,
+          currentId: repository.id,
+        });
       }
-      projectsByRepo.set(normalizedRepoId, project);
+      projectsByRepo.set(repository.id.toLowerCase() as RepoId, project);
     }
   }
 

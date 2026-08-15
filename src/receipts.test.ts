@@ -274,6 +274,49 @@ describe('validateReceipt', () => {
     ).toThrow(/not owned/);
   });
 
+  test('accepts a former repository id only through its retirement time', () => {
+    const transferredProject: Project = {
+      ...PROJECT,
+      repositories: [
+        {
+          id: parseRepoId('bob/ship'),
+          branch: 'main',
+          previousIds: [
+            {
+              id: parseRepoId('openai/ship'),
+              retiredAt: parseCanonicalTimestamp('2026-08-12T08:15:00.000Z'),
+            },
+          ],
+        },
+      ],
+    };
+    const transferredPullRequest: PullRequest = {
+      ...PULL_REQUEST,
+      repo: parseRepoId('bob/ship'),
+    };
+    const historicalReceipt = signedReceipt({
+      ...unsignedReceipt(),
+      repo: parseRepoId('openai/ship'),
+    });
+
+    expect(
+      validateReceipt(
+        historicalReceipt,
+        transferredProject,
+        transferredPullRequest,
+      ),
+    ).toBe(historicalReceipt);
+
+    const lateReceipt = signedReceipt({
+      ...unsignedReceipt(),
+      repo: parseRepoId('openai/ship'),
+      completedAt: parseCanonicalTimestamp('2026-08-12T08:20:00.000Z'),
+    });
+    expect(() =>
+      validateReceipt(lateReceipt, transferredProject, transferredPullRequest),
+    ).toThrow(/lineage/);
+  });
+
   test('rejects an agent tuple not explicitly allowed by the project', () => {
     const receipt = signedReceipt({
       ...unsignedReceipt(),

@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote, urlencode
@@ -24,6 +25,7 @@ MODES = {"implementation", "review", "validation", "testing", "documentation", "
 ASSOCIATIONS = {"OWNER", "MEMBER", "COLLABORATOR"}
 ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 REPO = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?/[A-Za-z0-9._-]{1,100}$")
+TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
 ADDRESS = re.compile(r"^0x[0-9a-fA-F]{40}$")
 INTEGER = re.compile(r"^(?:0|[1-9][0-9]*)$")
 UNSAFE_COMMAND = re.compile(r"(?:^|\s)(?:sudo|rm\s+-rf|git\s+(?:push|reset|clean)|gh\s+(?:issue|pr|release)\s+(?:create|edit|comment|close|merge|review)|(?:npm|bun|pnpm|yarn)\s+(?:publish|deploy)|forge\s+script)(?:\s|$)", re.I)
@@ -50,6 +52,18 @@ def texts(value: Any, path: str, *, nonempty: bool = False) -> list[str]:
         raise InvalidPlan(f"{path} contains duplicates")
     return result
 
+def canonical_timestamp(value: Any, path: str) -> str:
+    if not isinstance(value, str) or not TIMESTAMP.fullmatch(value):
+        raise InvalidPlan(f"{path} must be a canonical timestamp")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise InvalidPlan(f"{path} must be a canonical timestamp") from error
+    canonical = parsed.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    if canonical != value:
+        raise InvalidPlan(f"{path} must be a canonical timestamp")
+    return value
+
 def validate_project(value: Any) -> dict[str, Any]:
     project = record(value, PROJECT_KEYS, "project")
     project_id = text(project["id"], "project.id", maximum=48)
@@ -62,11 +76,26 @@ def validate_project(value: Any) -> dict[str, Any]:
         raise InvalidPlan("project.repositories must contain 1 to 20 entries")
     seen_repos: set[str] = set()
     for index, candidate in enumerate(repositories):
-        repo = record(candidate, {"id", "branch"}, f"project.repositories[{index}]")
+        path = f"project.repositories[{index}]"
+        if not isinstance(candidate, dict) or not {"id", "branch"}.issubset(candidate) or not set(candidate).issubset({"id", "branch", "previousIds"}):
+            raise InvalidPlan(f"{path} must contain id, branch, and optional previousIds")
+        repo = candidate
         repo_id = text(repo["id"], f"project.repositories[{index}].id", maximum=201)
         if not REPO.fullmatch(repo_id) or repo_id.casefold() in seen_repos:
-            raise InvalidPlan("repository ids must be unique owner/name values")
+            raise InvalidPlan("repository identities must be unique owner/name values")
         seen_repos.add(repo_id.casefold())
+        if "previousIds" in repo:
+            previous_ids = repo["previousIds"]
+            if not isinstance(previous_ids, list) or not previous_ids:
+                raise InvalidPlan(f"{path}.previousIds must be a non-empty array")
+            for previous_index, previous_candidate in enumerate(previous_ids):
+                previous_path = f"{path}.previousIds[{previous_index}]"
+                previous = record(previous_candidate, {"id", "retiredAt"}, previous_path)
+                previous_id = text(previous["id"], f"{previous_path}.id", maximum=201)
+                if not REPO.fullmatch(previous_id) or previous_id.casefold() in seen_repos:
+                    raise InvalidPlan("repository identities must be unique owner/name values")
+                seen_repos.add(previous_id.casefold())
+                canonical_timestamp(previous["retiredAt"], f"{previous_path}.retiredAt")
         branch = text(repo["branch"], f"project.repositories[{index}].branch", maximum=255)
         components = branch.split("/")
         if (branch.startswith("-") or branch.endswith(".") or branch == "@" or ".." in branch or "@{" in branch or re.search(r"[\x00-\x20\x7f~^:?*\[\\]", branch) or any(not component or component.startswith(".") or component.endswith(".lock") for component in components)):
@@ -86,8 +115,7 @@ def validate_project(value: Any) -> dict[str, Any]:
     reward = project["reward"]
     if reward is not None:
         reward = record(reward, {"startsAt", "token", "monthlyPoolBaseUnits", "funding"}, "project.reward")
-        if not isinstance(reward["startsAt"], str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z", reward["startsAt"]):
-            raise InvalidPlan("project.reward.startsAt must be a canonical timestamp")
+        canonical_timestamp(reward["startsAt"], "project.reward.startsAt")
         if not isinstance(reward["monthlyPoolBaseUnits"], str) or not INTEGER.fullmatch(reward["monthlyPoolBaseUnits"]):
             raise InvalidPlan("monthly pool must be canonical base units")
         token = record(reward["token"], {"address", "decimals", "symbol"}, "project.reward.token")

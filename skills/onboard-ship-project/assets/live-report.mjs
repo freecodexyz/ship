@@ -11,6 +11,8 @@ const MAX_ITEMS = 5000;
 let collectedItems = 0;
 const SAFE_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
 const FULL_SHA = /^[0-9a-f]{40}$/u;
+const REPO = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?\/[A-Za-z0-9._-]{1,100}$/u;
+const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u;
 const LABEL_SUFFIX = /^[a-z0-9][a-z0-9._/-]*$/iu;
 const BOT = /(?:\[bot\]$|(?:^|[-_])bot$|^(?:dependabot|github-actions|renovate)(?:\[bot\])?$)/iu;
 const EPIC_TITLE = /^\s*(?:\[[^\]]*\bepic\b[^\]]*\]|epic\s*:)/iu;
@@ -35,8 +37,17 @@ function validate(project, policy) {
   const repos = new Set();
   for (const candidate of project.repositories) {
     const repo = object(candidate, 'repository');
-    if (typeof repo.id !== 'string' || typeof repo.branch !== 'string' || !/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?\/[A-Za-z0-9._-]{1,100}$/u.test(repo.id) || repos.has(repo.id.toLowerCase())) fail('invalid or duplicate repository');
+    if (typeof repo.id !== 'string' || typeof repo.branch !== 'string' || !REPO.test(repo.id) || repos.has(repo.id.toLowerCase())) fail('invalid or duplicate repository');
     repos.add(repo.id.toLowerCase());
+    if (repo.previousIds !== undefined) {
+      if (!Array.isArray(repo.previousIds) || repo.previousIds.length === 0) fail('repository.previousIds must be a non-empty array');
+      for (const candidatePrevious of repo.previousIds) {
+        const previous = object(candidatePrevious, 'repository.previousIds entry');
+        if (typeof previous.id !== 'string' || !REPO.test(previous.id) || repos.has(previous.id.toLowerCase())) fail('invalid or duplicate repository identity');
+        if (typeof previous.retiredAt !== 'string' || !TIMESTAMP.test(previous.retiredAt) || new Date(previous.retiredAt).toISOString() !== previous.retiredAt) fail('invalid repository retirement timestamp');
+        repos.add(previous.id.toLowerCase());
+      }
+    }
   }
   if (policy.schemaVersion !== 2) fail('invalid policy schemaVersion');
   strings(policy.modes, 'modes');
@@ -53,7 +64,7 @@ function validate(project, policy) {
   if (typeof comments.enabled !== 'boolean' || typeof comments.implementationPrefix !== 'string' || typeof comments.reviewPrefix !== 'string' || !Number.isInteger(comments.expiresAfterDays) || comments.expiresAfterDays < 1 || comments.expiresAfterDays > 30) fail('invalid comment claim policy');
   if (strings(comments.trustedAssociations, 'trustedAssociations').some(value => !SAFE_ASSOCIATIONS.has(value))) fail('invalid trusted association');
   strings(policy.priorityLabels, 'priorityLabels');
-  return repos;
+  return new Set(project.repositories.map(repository => repository.id.toLowerCase()));
 }
 function ghLines(endpoint) {
   const result = spawnSync('gh', ['api', '--method', 'GET', '--paginate', '--jq', '.[]', endpoint], {encoding: 'utf8', maxBuffer: MAX_OUTPUT, timeout: 60_000});

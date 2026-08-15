@@ -17,6 +17,7 @@ import {
   type Project,
   type RewardContributor,
   type RewardFunding,
+  type RepositoryPreviousId,
   type RunReceipt,
   type ScoreBucket,
   type Snapshot,
@@ -59,7 +60,8 @@ const PROJECT_FIELDS = new Set([
   'reward',
   'allowedModels',
 ]);
-const REPOSITORY_FIELDS = new Set(['id', 'branch']);
+const REPOSITORY_FIELDS = new Set(['id', 'branch', 'previousIds']);
+const PREVIOUS_REPOSITORY_FIELDS = new Set(['id', 'retiredAt']);
 const REWARD_CONFIG_FIELDS = new Set([
   'startsAt',
   'token',
@@ -201,6 +203,14 @@ function copyProject(project: Project): Project {
     repositories: project.repositories.map(repository => ({
       id: repository.id,
       branch: repository.branch,
+      ...(repository.previousIds === undefined
+        ? {}
+        : {
+            previousIds: repository.previousIds.map(previous => ({
+              id: previous.id,
+              retiredAt: previous.retiredAt,
+            })),
+          }),
     })),
     allowedModels: project.allowedModels.map(model => ({
       client: model.client,
@@ -562,12 +572,46 @@ function parseProject(value: unknown, context: string): Project {
       REPOSITORY_FIELDS,
       `${context}.repositories[${index}]`,
     );
+    const id = parseRepoId(repository.id);
+    let previousIds: readonly RepositoryPreviousId[] | undefined;
+    if (repository.previousIds !== undefined) {
+      previousIds = parseArray(
+        repository.previousIds,
+        `${context}.repositories[${index}].previousIds`,
+      ).map((previousValue, previousIndex) => {
+        const previous = parseRecord(
+          previousValue,
+          PREVIOUS_REPOSITORY_FIELDS,
+          `${context}.repositories[${index}].previousIds[${previousIndex}]`,
+        );
+        return {
+          id: parseRepoId(previous.id),
+          retiredAt: parseCanonicalTimestamp(previous.retiredAt),
+        };
+      });
+      if (previousIds.length === 0) {
+        throw new TypeError(
+          `${context}.repositories[${index}].previousIds must not be empty.`,
+        );
+      }
+      const identities = new Set([id.toLowerCase()]);
+      for (const previous of previousIds) {
+        const normalized = previous.id.toLowerCase();
+        if (identities.has(normalized)) {
+          throw new TypeError(
+            `${context}.repositories[${index}].previousIds contains a duplicate repository identity.`,
+          );
+        }
+        identities.add(normalized);
+      }
+    }
     return {
-      id: parseRepoId(repository.id),
+      id,
       branch: parseNonemptyString(
         repository.branch,
         `${context}.repositories[${index}].branch`,
       ),
+      ...(previousIds === undefined ? {} : {previousIds}),
     };
   });
   if (repositories.length === 0) {
@@ -925,15 +969,21 @@ function assertUniqueProjectsAndRepositories(
 
     const repositories = new Set<string>();
     for (const repository of project.repositories) {
-      const normalized = repository.id.toLowerCase();
-      const owner = repositoryOwners.get(normalized);
-      if (owner !== undefined) {
-        throw new TypeError(
-          `Repository "${repository.id}" has duplicate ownership by "${owner}" and "${project.id}".`,
-        );
+      const identities = [
+        repository.id,
+        ...(repository.previousIds?.map(previous => previous.id) ?? []),
+      ];
+      for (const identity of identities) {
+        const normalized = identity.toLowerCase();
+        const owner = repositoryOwners.get(normalized);
+        if (owner !== undefined) {
+          throw new TypeError(
+            `Repository identity "${identity}" has duplicate ownership by "${owner}" and "${project.id}".`,
+          );
+        }
+        repositoryOwners.set(normalized, project.id);
       }
-      repositories.add(normalized);
-      repositoryOwners.set(normalized, project.id);
+      repositories.add(repository.id.toLowerCase());
     }
     repositoriesByProject.set(project.id, repositories);
   }
@@ -950,6 +1000,47 @@ function assertOwnedRepository(
   if (
     repositories === undefined ||
     !repositories.has(repository.toLowerCase())
+  ) {
+    throw new TypeError(`${context} refers to an unowned repository.`);
+  }
+}
+
+function repositoryMatchesReceipt(
+  project: Project | undefined,
+  currentRepository: string,
+  receiptRepository: string,
+  completedAt: CanonicalTimestamp,
+): boolean {
+  if (project === undefined) return false;
+  const repository = project.repositories.find(candidate =>
+    sameRepository(candidate.id, currentRepository),
+  );
+  if (repository === undefined) return false;
+  if (sameRepository(repository.id, receiptRepository)) return true;
+  return (
+    repository.previousIds?.some(
+      previous =>
+        sameRepository(previous.id, receiptRepository) &&
+        completedAt <= previous.retiredAt,
+    ) === true
+  );
+}
+
+function assertReceiptRepository(
+  project: Project | undefined,
+  receipt: RunReceipt,
+  context: string,
+): void {
+  if (
+    project === undefined ||
+    !project.repositories.some(repository =>
+      repositoryMatchesReceipt(
+        project,
+        repository.id,
+        receipt.repo,
+        receipt.completedAt,
+      ),
+    )
   ) {
     throw new TypeError(`${context} refers to an unowned repository.`);
   }
@@ -1097,6 +1188,7 @@ export function validateSnapshot(value: unknown): SnapshotWithRewards {
     (project, index) => parseProject(project, `Snapshot projects[${index}]`),
   );
   const repositoriesByProject = assertUniqueProjectsAndRepositories(projects);
+  const projectsById = new Map(projects.map(project => [project.id, project]));
 
   const buckets = parseArray(snapshot.buckets, 'Snapshot buckets').map(
     (bucket, index) => parseBucket(bucket, `Snapshot buckets[${index}]`),
@@ -1140,10 +1232,9 @@ export function validateSnapshot(value: unknown): SnapshotWithRewards {
         throw new TypeError(`Duplicate receipt runId "${parsed.runId}".`);
       }
       receiptIds.add(parsed.runId);
-      assertOwnedRepository(
-        parsed.project,
-        parsed.repo,
-        repositoriesByProject,
+      assertReceiptRepository(
+        projectsById.get(parsed.project),
+        parsed,
         `Snapshot receipts[${index}]`,
       );
       return parsed;
@@ -1163,7 +1254,12 @@ export function validateSnapshot(value: unknown): SnapshotWithRewards {
     }
     if (
       receipt.project !== award.project ||
-      !sameRepository(receipt.repo, award.repo)
+      !repositoryMatchesReceipt(
+        projectsById.get(award.project),
+        award.repo,
+        receipt.repo,
+        receipt.completedAt,
+      )
     ) {
       throw new TypeError(
         `Award "${award.id}" does not match its linked receipt.`,

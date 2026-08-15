@@ -91,6 +91,24 @@ class OnboardTests(unittest.TestCase):
         }
         self.assertEqual(ONBOARD.validate(plan)["project"]["reward"]["funding"]["status"], "pledged")
 
+    def test_validates_repository_transfer_history(self) -> None:
+        plan = valid_plan()
+        plan["project"]["repositories"] = [{
+            "id": "bob/alpha",
+            "branch": "main",
+            "previousIds": [{"id": "owner/alpha", "retiredAt": "2026-08-01T00:00:00.000Z"}],
+        }]
+        repositories = ONBOARD.validate(plan)["project"]["repositories"]
+        self.assertEqual(repositories[0]["previousIds"][0]["id"], "owner/alpha")
+
+    def test_rejects_duplicate_repository_transfer_identity(self) -> None:
+        plan = valid_plan()
+        plan["project"]["repositories"][0]["previousIds"] = [
+            {"id": "OWNER/ALPHA", "retiredAt": "2026-08-01T00:00:00.000Z"}
+        ]
+        with self.assertRaisesRegex(ONBOARD.InvalidPlan, "identities must be unique"):
+            ONBOARD.validate(plan)
+
     def test_rejects_unknown_fields(self) -> None:
         plan = valid_plan()
         plan["policy"]["customCode"] = "return true"
@@ -174,9 +192,41 @@ class OnboardTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("project.allowedModels", result.stderr)
 
+    def test_generated_receipt_rejects_retired_repository_remote(self) -> None:
+        plan = valid_plan()
+        plan["project"]["allowedModels"] = [{"client": "codex", "provider": "openai", "model": "gpt-test"}]
+        plan["project"]["repositories"] = [{
+            "id": "bob/alpha",
+            "branch": "main",
+            "previousIds": [{"id": "owner/alpha", "retiredAt": "2020-01-01T00:00:00.000Z"}],
+        }]
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            ship = base / "ship"
+            ship.mkdir()
+            init_ship_checkout(ship)
+            ONBOARD.scaffold(plan, ship)
+            contribution = base / "alpha"
+            contribution.mkdir()
+            subprocess.run(["git", "init", "-b", "work", str(contribution)], check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(contribution), "remote", "add", "origin", "https://github.com/owner/alpha.git"], check=True)
+            runner = ship / "skills" / "contribute-to-alpha-project" / "scripts" / "run-receipt.mjs"
+            result = subprocess.run([
+                shutil.which("node") or "node", str(runner), "start",
+                "--client", "codex", "--provider", "openai", "--model", "gpt-test",
+                "--repo-root", str(contribution),
+            ], text=True, capture_output=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("configured for this project", result.stderr)
+
     def test_generated_receipt_passes_ship_contract(self) -> None:
         plan = valid_plan()
         plan["project"]["allowedModels"] = [{"client": "codex", "provider": "openai", "model": "gpt-test"}]
+        plan["project"]["repositories"] = [{
+            "id": "bob/alpha",
+            "branch": "main",
+            "previousIds": [{"id": "owner/alpha", "retiredAt": "2999-01-01T00:00:00.000Z"}],
+        }]
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
             ship = base / "ship"
@@ -201,9 +251,9 @@ class OnboardTests(unittest.TestCase):
             finished = subprocess.run([shutil.which("node") or "node", str(runner), "finish", *common, "--run", run_id], check=True, text=True, capture_output=True, env=environment)
             marker = json.loads(finished.stdout)["marker"]
             contract = base / "contract.ts"
-            contract.write_text(f'''import {{parseReceiptMarker, validateReceipt}} from {json.dumps(str(Path.cwd() / "src" / "receipts.ts"))};\nimport {{parseRepoId}} from {json.dumps(str(Path.cwd() / "src" / "types.ts"))};\nconst receipt = parseReceiptMarker(process.env.MARKER!);\nconst project = {{id: "alpha-project", name: "Alpha Project", repositories: [{{id: parseRepoId("owner/alpha"), branch: "main"}}], allowedModels: [{{client: "codex" as const, provider: "openai", model: "gpt-test"}}]}};\nconst pull = {{id: "PR_fixture", repo: parseRepoId("owner/alpha"), number: 1, title: "Fixture", author: {{id: "U_fixture", login: "test"}}, mergedAt: "2999-01-01T00:00:00.000Z", headSha: "a".repeat(40), files: [], closedIssueIds: [], reviews: [], evidence: []}} as const;\nvalidateReceipt(receipt, project, pull);\nconsole.log(receipt.usage.confidence);\n''')
+            contract.write_text(f'''import {{parseReceiptMarker, validateReceipt}} from {json.dumps(str(Path.cwd() / "src" / "receipts.ts"))};\nimport {{parseRepoId}} from {json.dumps(str(Path.cwd() / "src" / "types.ts"))};\nconst receipt = parseReceiptMarker(process.env.MARKER!);\nconst project = {{id: "alpha-project", name: "Alpha Project", mission: "Improve Alpha through bounded, reviewable public contributions.", repositories: [{{id: parseRepoId("bob/alpha"), branch: "main", previousIds: [{{id: parseRepoId("owner/alpha"), retiredAt: "2999-01-01T00:00:00.000Z"}}]}}], allowedModels: [{{client: "codex" as const, provider: "openai", model: "gpt-test"}}]}};\nconst pull = {{id: "PR_fixture", repo: parseRepoId("bob/alpha"), number: 1, title: "Fixture", author: {{id: "U_fixture", login: "test"}}, mergedAt: "2999-01-01T00:00:00.000Z", headSha: "a".repeat(40), files: [], closedIssueIds: [], reviews: [], evidence: []}} as const;\nvalidateReceipt(receipt, project, pull);\nconsole.log(`${{receipt.repo}} ${{receipt.usage.confidence}}`);\n''')
             checked = subprocess.run(["bun", str(contract)], check=True, text=True, capture_output=True, env=os.environ | {"MARKER": marker})
-            self.assertEqual(checked.stdout.strip(), "unavailable")
+            self.assertEqual(checked.stdout.strip(), "owner/alpha unavailable")
 
     def test_rejects_unbounded_claim_label_prefixes(self) -> None:
         plan = valid_plan()
@@ -224,7 +274,11 @@ class OnboardTests(unittest.TestCase):
                 "schemaVersion": 1,
                 "id": "alpha-project",
                 "name": "Alpha Project",
-                "repositories": [{"id": "owner/alpha", "branch": "main"}],
+                "repositories": [{
+                    "id": "owner/alpha",
+                    "branch": "main",
+                    "previousIds": [{"id": "legacy/alpha", "retiredAt": "2025-01-01T00:00:00.000Z"}],
+                }],
             }))
             (skill / "policy.json").write_text(json.dumps({"schemaVersion": 2, **plan["policy"]}))
             fake_bin = root / "bin"
