@@ -1,0 +1,4 @@
+interface:
+  display_name: "Contribute to macwlt"
+  short_description: "Find and complete current macwlt work"
+  default_prompt: "Use $contribute-to-paoloanzn-macwlt to find and complete one current, bounded contribution."

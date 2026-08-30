@@ -46,6 +46,28 @@ describe('discoverContributorSkills', () => {
     }
   });
 
+  test('rejects a project without its canonical contributor skill', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'ship-site-test-'));
+    try {
+      await mkdir(join(root, 'projects'));
+      await mkdir(join(root, 'skills', 'contribute-to-alpha'), {
+        recursive: true,
+      });
+      await writeFile(join(root, 'projects', 'alpha.json'), '{}');
+      await writeFile(join(root, 'projects', 'unpaired.json'), '{}');
+      await writeFile(
+        join(root, 'skills', 'contribute-to-alpha', 'SKILL.md'),
+        'a',
+      );
+      await expect(discoverContributorSkills(root)).rejects.toThrow(
+        'projects missing a contributor skill: unpaired ' +
+          '(skills/contribute-to-unpaired)',
+      );
+    } finally {
+      await rm(root, {recursive: true, force: true});
+    }
+  });
+
   test('rejects a skill without matching canonical project metadata', async () => {
     const root = await mkdtemp(join(tmpdir(), 'ship-site-test-'));
     try {

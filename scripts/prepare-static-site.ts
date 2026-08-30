@@ -61,7 +61,7 @@ function git(
   }).trim();
 }
 
-/** Finds canonical contributor skill trees and rejects orphaned trees. */
+/** Finds canonical contributor skill trees and rejects unpaired trees. */
 export async function discoverContributorSkills(
   root: string,
 ): Promise<readonly ContributorSkill[]> {
@@ -89,6 +89,17 @@ export async function discoverContributorSkills(
       throw new TypeError(`${entry.name} must contain a regular SKILL.md`);
     }
     skills.push({id, name: entry.name, sourcePath: `skills/${entry.name}`});
+  }
+  const published = new Set(skills.map(skill => skill.id));
+  const unpaired = [...projectIds]
+    .filter(projectId => !published.has(projectId))
+    .sort((left, right) => left.localeCompare(right));
+  if (unpaired.length > 0) {
+    throw new TypeError(
+      `projects missing a contributor skill: ${unpaired
+        .map(projectId => `${projectId} (skills/contribute-to-${projectId})`)
+        .join(', ')}`,
+    );
   }
   return skills.sort((left, right) => left.id.localeCompare(right.id));
 }

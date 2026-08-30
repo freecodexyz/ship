@@ -1,0 +1,38 @@
+# Contribution guide
+
+## Project rules
+
+- Read the root AGENTS.md and every applicable subpackage AGENTS.md before changing code; native core and XPC changes also follow packages/core/CLAUDE.md.
+- macwlt is alpha, self-custodial wallet infrastructure: never weaken Secure Enclave signing boundaries, key isolation, or the XPC trust boundary to make a change simpler.
+- Never handle private keys, seed phrases, credentials, or real funds; use disposable test material and never commit secrets or wallet state.
+- TypeScript packages are verified with pnpm from the repository root; the native core and signing service build and test through the root Makefile and require macOS with Xcode command line tools.
+- Follow the repository commit format documented in AGENTS.md, and set its tested field from checks you actually ran.
+- Report security-sensitive findings privately to the maintainer instead of opening a public issue or pull request.
+
+## Verification
+
+### Setup
+
+- `pnpm install --frozen-lockfile`
+
+### Required
+
+- `pnpm run typecheck`
+- `pnpm run test`
+
+## Evidence
+
+### Implementation
+
+- State the user-visible outcome and the exact repository checks you ran, with their results.
+- Name every package you touched and the subpackage AGENTS.md guidance you followed.
+- Report untested surfaces explicitly, including anything that needs macOS hardware, Xcode, or Secure Enclave access you could not exercise.
+
+### Review
+
+- Report concrete findings with file and line references, and say which checks you ran to reach them.
+- Call out signing, key-handling, or XPC boundary changes separately, and leave the accept or reject decision to a maintainer.
+
+## Fixed boundaries
+
+GitHub is authoritative. Refresh live state before work. Do not expose secrets, handle security-sensitive work publicly, reserve work through Ship, or treat a report candidate as acceptance or payment.
