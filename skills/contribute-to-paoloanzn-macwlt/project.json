@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "paoloanzn-macwlt",
+  "name": "macwlt",
+  "mission": "Make macwlt's self-custodial macOS wallet infrastructure safer, more reliable, and easier to use while preserving its Secure Enclave-backed signing boundaries.",
+  "repositories": [
+    {
+      "id": "paoloanzn/macwlt",
+      "branch": "main"
+    }
+  ],
+  "allowedModels": []
+}
