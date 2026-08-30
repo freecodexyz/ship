@@ -1,0 +1,27 @@
+{
+  "id": "paoloanzn-macwlt",
+  "name": "macwlt",
+  "mission": "Make macwlt's self-custodial macOS wallet infrastructure safer, more reliable, and easier to use while preserving its Secure Enclave-backed signing boundaries.",
+  "repositories": [
+    {
+      "id": "paoloanzn/macwlt",
+      "branch": "main"
+    }
+  ],
+  "reward": {
+    "startsAt": "2026-09-01T00:00:00.000Z",
+    "token": {
+      "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "decimals": 6,
+      "symbol": "USDC"
+    },
+    "monthlyPoolBaseUnits": "5000000000",
+    "funding": {
+      "status": "pledged",
+      "settlement": "proposal-only",
+      "unusedFunds": "rollover-without-cap-increase"
+    }
+  },
+  "allowedModels": []
+}
+)
