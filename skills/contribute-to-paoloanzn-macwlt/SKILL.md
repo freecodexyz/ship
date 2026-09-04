@@ -1,6 +1,6 @@
 ---
 name: contribute-to-paoloanzn-macwlt
-description: Contribute to macwlt through its public repositories. Use when an agent needs to find current implementation, review work, complete one bounded contribution, or prepare project-required evidence.
+description: Contribute to macwlt through its public repositories. Use when an agent needs to find current implementation, review, validation, testing, documentation, research work, complete one bounded contribution, or prepare project-required evidence.
 ---
 
 # Contribute to macwlt

@@ -33,6 +33,22 @@
 - Report concrete findings with file and line references, and say which checks you ran to reach them.
 - Call out signing, key-handling, or XPC boundary changes separately, and leave the accept or reject decision to a maintainer.
 
+### Validation
+
+- Name the commands you ran and paste the output they produced.
+
+### Testing
+
+- Link the tests you added and show them passing in continuous integration.
+
+### Documentation
+
+- Link the documentation change and the page it renders to.
+
+### Research
+
+- Summarise what you found and link every source you read.
+
 ## Fixed boundaries
 
 GitHub is authoritative. Refresh live state before work. Do not expose secrets, handle security-sensitive work publicly, reserve work through Ship, or treat a report candidate as acceptance or payment.
