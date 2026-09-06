@@ -57,7 +57,11 @@ def parse_json(value: bytes, context: str) -> Any:
 def fetch_url(url: str, limit: int) -> bytes:
     request = urllib.request.Request(
         url,
-        headers={"Accept": "application/json, application/octet-stream", "Cache-Control": "no-cache"},
+        headers={
+            "Accept": "application/json, application/octet-stream",
+            "Cache-Control": "no-cache",
+            "User-Agent": "ship",
+        },
     )
     try:
         with urllib.request.urlopen(request, timeout=30) as response:

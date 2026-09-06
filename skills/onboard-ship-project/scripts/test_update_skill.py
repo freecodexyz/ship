@@ -11,6 +11,7 @@ import unittest
 import zipfile
 from pathlib import Path
 from typing import Any
+from unittest.mock import MagicMock, patch
 
 MODULE_PATH = Path(__file__).parents[1] / "assets" / "update-skill.py"
 SPEC = importlib.util.spec_from_file_location("ship_update_skill", MODULE_PATH)
@@ -93,6 +94,25 @@ class Fixture:
 
 
 class UpdateSkillTests(unittest.TestCase):
+    def test_sends_user_agent_for_manifest_and_archive(self) -> None:
+        fixture = Fixture("b" * 40)
+        responses = []
+        for payload in (fixture.manifest, fixture.archive):
+            response = MagicMock()
+            response.__enter__.return_value = response
+            response.headers = {"Content-Length": str(len(payload))}
+            response.read.return_value = payload
+            responses.append(response)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = fixture.install_old(Path(directory))
+            with patch.object(UPDATER.urllib.request, "urlopen", side_effect=responses) as urlopen:
+                self.assertTrue(UPDATER.update(root))
+            self.assertEqual(urlopen.call_count, 2)
+            for call in urlopen.call_args_list:
+                request = call.args[0]
+                self.assertEqual(request.get_header("User-agent"), "ship")
+
     def test_replaces_the_complete_stale_skill(self) -> None:
         fixture = Fixture("b" * 40)
         calls: list[str] = []
