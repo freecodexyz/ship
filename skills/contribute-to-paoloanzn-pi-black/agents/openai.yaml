@@ -1,0 +1,4 @@
+interface:
+  display_name: "Contribute to pi-black"
+  short_description: "Find and complete current pi-black work"
+  default_prompt: "Use $contribute-to-paoloanzn-pi-black to find and complete one current, bounded contribution."

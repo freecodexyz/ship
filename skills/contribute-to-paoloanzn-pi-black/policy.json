@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 2,
+  "modes": [
+    "implementation"
+  ],
+  "issues": {
+    "allowUnlabeled": false,
+    "readyLabels": [
+      "good first issue",
+      "help wanted"
+    ],
+    "blockedLabels": [],
+    "sensitiveLabels": [],
+    "epicLabels": []
+  },
+  "claims": {
+    "assignees": true,
+    "implementationLabels": [],
+    "implementationLabelPrefixes": [
+      "claimed:",
+      "in-progress:"
+    ],
+    "reviewLabels": [],
+    "reviewLabelPrefixes": [
+      "review-claimed:",
+      "review-in-progress:"
+    ],
+    "comments": {
+      "enabled": false,
+      "implementationPrefix": "CLAIMING:",
+      "reviewPrefix": "CLAIMING REVIEW:",
+      "trustedAssociations": [
+        "OWNER",
+        "MEMBER",
+        "COLLABORATOR"
+      ],
+      "expiresAfterDays": 7
+    }
+  },
+  "priorityLabels": [],
+  "verification": {
+    "setup": [
+      "npm ci"
+    ],
+    "required": [
+      "npm run test"
+    ]
+  },
+  "evidence": {
+    "implementation": [
+      "State the user-visible outcome and the exact repository checks you ran, with their results.",
+      "Link the issue the change closes and name every file you touched.",
+      "Report untested surfaces explicitly instead of implying coverage you did not exercise."
+    ]
+  },
+  "guide": [
+    "Base every change on the main branch and keep one pull request to one issue.",
+    "Report security-sensitive findings through SECURITY.md instead of a public issue or pull request."
+  ]
+}

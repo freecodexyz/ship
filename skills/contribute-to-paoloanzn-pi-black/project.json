@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "paoloanzn-pi-black",
+  "name": "pi-black",
+  "mission": "Claude subscription wire compatibility for Pi.",
+  "repositories": [
+    {
+      "id": "paoloanzn/pi-black",
+      "branch": "main"
+    }
+  ],
+  "allowedModels": [],
+  "generator": {
+    "template": 1,
+    "shipRevision": "003b59d9c7c2424fa8f4f245b08a842c9fad45f0"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "paoloanzn-pi-black",
+  "name": "pi-black",
+  "mission": "Claude subscription wire compatibility for Pi.",
+  "repositories": [
+    {
+      "id": "paoloanzn/pi-black",
+      "branch": "main"
+    }
+  ],
+  "allowedModels": []
+}
